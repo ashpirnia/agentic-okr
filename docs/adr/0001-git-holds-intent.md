@@ -1,6 +1,6 @@
 # ADR-0001 — Git holds intent, the Shepherd's store holds observation
 
-**Status:** Accepted
+**Status:** Accepted — amended 2026-08-07, see Amendments
 **Date:** 2026-08-07
 **Deciders:** Ash, Claude
 
@@ -27,7 +27,7 @@ What goes in the OKR repo, versioned and reviewed:
 - Objectives, key results, success criteria
 - Guardrail metric *definitions* — name, definition, direction, threshold, measurement window
 - Anti-targets and restraint clauses
-- Ownership, links, and the reserved wiring section
+- Ownership and links
 
 What never goes in the OKR repo:
 
@@ -35,6 +35,7 @@ What never goes in the OKR repo:
 - KPI readings and the Shepherd's time series
 - Drift alerts and their resolution state
 - Anything a machine writes on a schedule
+- Which agents serve a key result, and how a key result is measured — both are Conductor-owned (see Amendments)
 
 **The test:** if a field would be written by a machine on a schedule, it is observation and it does not belong in the schema. No exceptions for "just a small number." A single `current_value` field is how this erodes.
 
@@ -69,3 +70,27 @@ What never goes in the OKR repo:
 **The adopting organisation provides the database.** The framing this ADR corrects. Rejected because it converts a phase-3 implementation detail into a day-one adoption prerequisite, and because it misplaces ownership: the schema and lifecycle of the store are the Shepherd's concern, not the user's. Orgs may host it; they should never have to design it.
 
 **Defer the boundary entirely and decide when the Shepherd is built.** Tempting, since nothing in v1 needs a store. Rejected because the schema is being designed now, and a schema designed without this boundary will absorb observation fields by default — they always look reasonable one at a time. The boundary is cheap to state today and expensive to retrofit once files exist in the wild.
+
+## Amendments
+
+### 2026-08-07 — A third category: measurement configuration
+
+This ADR originally described two categories, intent and observation, and implied they were exhaustive. They are not. Clarifying the three roles' responsibilities surfaced a third:
+
+**Measurement configuration** — where a key result's current value is obtained. An MCP connection: an API call, a file read, a database query, or a Slack message to a human asking for an update.
+
+It is not intent: nobody *meant* anything by choosing a Zendesk endpoint. It is not observation: no machine writes it on a schedule; a person configures it once and it stays put. It fails both tests and belongs in neither store.
+
+**It is owned by the Conductor, keyed by key result.** The Conductor is the registry of connections — agents, agent-to-goal wiring, and now KR-to-measurement-source. The agent developer supplies it at registration, which is the natural moment, but the record attaches to the key result rather than to the agent. Attaching it to the agent would mean a key result loses its measurement when an agent is deregistered, that two agents serving one goal can carry configs that disagree, and that a human-owned key result cannot be measured at all. That last consequence is disqualifying: piece 1's premise is that OKRs govern human and agent work alike, and measurement that exists only where agents exist can only ever see half the organisation.
+
+**It stays out of the OKR repo.** Connection configuration carries endpoints and credential references. The OKR repo is reviewed by goal owners — support leads and heads of product — and putting infrastructure plumbing in the file they read to understand what a goal means is how that file stops being readable by them.
+
+The three-way boundary is therefore:
+
+| Category | Example | Owner | Written by |
+| :--- | :--- | :--- | :--- |
+| Intent | "Reopen rate must not exceed 8%" | Champion (git) | A human, deliberately |
+| Measurement config | "Reopen rate comes from Zendesk API X" | Conductor | A developer, at registration |
+| Observation | "Reopen rate was 8.1% on Tuesday" | Shepherd (its store) | A machine, on a schedule |
+
+The guardrail metric's identity is the join key across all three. ADR-0008 must choose a naming scheme that makes a three-way join natural, not just the two-way join noted in the original Consequences.

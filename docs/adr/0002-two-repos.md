@@ -19,6 +19,7 @@ There are two artefacts with almost nothing in common:
 | Versioned by | Semver releases | The org's own commit history |
 | Changes when | We ship a feature | The org changes what it means |
 | Audience | Developers | Goal owners — support leads, heads of product |
+| Served by | The Conductor, which agent developers register against | The Champion, which goal owners are facilitated by |
 | Lifecycle | Ours | Theirs, and it outlives any version of ours |
 
 The audience row is the one with teeth. The person raising a pull request to add a guardrail is a support lead, not an engineer. If reviewing that PR requires them to be looking at a Python source tree, the "goal changes get reviewed like code" promise quietly fails — not because the mechanism is wrong, but because the people it was for cannot use it.

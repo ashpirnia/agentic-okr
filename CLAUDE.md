@@ -6,7 +6,11 @@ Context for Claude Code working in this repo. These are the invariants — read 
 
 `agentic-okr` is a **tool**. It lets an organisation write its OKRs as machine-readable specs in git, precisely enough that agents can be pointed at them. Three roles sit on top of that spec: the **Champion** helps humans write it, the **Conductor** wires agents to it and lints the connection, the **Shepherd** watches for drift and feeds what it catches back as new spec.
 
-Only the Champion is being built. Conductor and Shepherd exist in this repo as an event contract and a reserved wiring field, nothing more.
+Only the Champion is being built. Conductor and Shepherd exist in this repo as an event contract, nothing more.
+
+**The three own different things.** Champion: what you meant (git). Conductor: how it is hooked up — the agent registry, agent→key-result wiring, and where each KR's value is read from. Shepherd: what happened (its own store). Each has a different primary audience — goal owners, agent developers, and leaders respectively.
+
+**Wiring points from agents to key results, never the reverse.** The OKR spec has no field listing which agents serve a KR, and adding one is a mistake, not an oversight. Agents are numerous and redeployed constantly; key results are few and slow. Listing agents in the OKR YAML would make every deployment a commit to the goal repo, destroying the commit log exactly as progress numbers would.
 
 ## The two repos — read this first
 
