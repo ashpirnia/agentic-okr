@@ -14,6 +14,15 @@ dependencies = [
     "typer>=0.27.1",
 ]
 
+[project.optional-dependencies]
+# The facilitation agent. Kept optional so the schema, loader, validator and
+# CLI stay installable without an API key or an Anthropic account. See ADR-0004.
+agent = [
+    "langgraph>=0.2",
+    "langchain-anthropic>=0.3",
+    "langgraph-checkpoint-sqlite>=2.0",
+]
+
 [project.scripts]
 okr = "agentic_okr:main"
 

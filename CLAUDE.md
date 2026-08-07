@@ -48,7 +48,10 @@ A field earns its place only if the Champion can elicit it from a human *today*.
 Declared once per OKR repo, in `okr.yaml`. The loader validates it against a supported set and fails clearly on mismatch. Never make it default or infer it.
 
 **`core` never imports `champion`.**
-`core/` is the schema, loader, graph and validator — a library with no LLM dependency, installable and runnable without an API key. `champion/` is the agent workflow and depends on `core`. The dependency runs one way only. The Conductor's lint will later sit on `core` too, which is the reason for the split.
+`core/` is the schema, loader, graph and validator — a library with no LLM dependency, installable and runnable without an API key. `champion/` is the agent workflow and depends on `core`. The dependency runs one way only. The Conductor's lint will later sit on `core` too, which is the reason for the split. Agent dependencies live in the optional `agent` extra; a test asserts `core` imports cleanly without it, so never add a convenience import that breaks the minimal install.
+
+**Nothing leaves the machine by default.**
+LangSmith tracing is opt-in via environment variable. Trace payloads carry prompt content, which here is an organisation's OKRs. Never enable it in code, a config default, or a test fixture. Checkpoints go in the OS app-data directory, never the OKR repo. The model is pinned to `claude-sonnet-5` — never substitute an alias, because article evidence has to stay reproducible. See ADR-0004.
 
 **The goal topology is a graph, not a tree.**
 A key result can support multiple parent objectives. OKRs are created both cascading (top-down) and laddering (bottom-up). Any code, test or example that assumes a single parent is wrong. Referential integrity is not free in flat files — dangling IDs and accidental cycles are the failure mode this project exists to prevent, so validation is a first-class feature, not a nicety.
