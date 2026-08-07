@@ -30,8 +30,8 @@ jobs:
 
       - name: Run tests
         run: |
-          uv run pytest
-          code=$?
+          uv run pytest || code=$?
+          code=${code:-0}
           # Exit code 5 means no tests were collected; the core/champion
           # packages don't have tests yet during early bootstrap.
           if [ "$code" -ne 0 ] && [ "$code" -ne 5 ]; then
