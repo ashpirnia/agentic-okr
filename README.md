@@ -84,7 +84,9 @@ The spec format is the product. Everything else is built on top of it.
 Two write paths, deliberately kept apart:
 
 - **Intent lives in git.** Objectives, key results, success criteria, guardrail metric definitions, anti-targets and ownership are low-volume, deliberate, and benefit from review. A change to what you meant should be a pull request with a diff someone reads.
-- **Observation lives in a database.** Current metric values, KPI readings and drift signals are high-volume and machine-written. They have no business in version control — a goal repo whose commit log is buried under progress numbers has lost the only property that made this worth doing.
+- **Observation lives in the Shepherd's store.** Current metric values, KPI readings and drift signals are high-volume and machine-written. They have no business in version control — a goal repo whose commit log is buried under progress numbers has lost the only property that made this worth doing.
+
+You do not have to provide a database. The Shepherd owns its own store and will ship with bundled SQLite; hosting it elsewhere is an option for organisations running at scale, never a prerequisite. It holds derived readings, not a system of record — your raw KPIs stay where they already are. And v1 needs no persistence at all: `okr validate` runs against a directory with nothing to install or connect. See [ADR-0001](docs/adr/0001-git-holds-intent.md).
 
 The practical payoff: when the Shepherd discovers that agents found a way to game a goal, the new guardrail arrives as a PR with the evidence attached. A human merges it, and the trick is on the page for every fleet that follows.
 
