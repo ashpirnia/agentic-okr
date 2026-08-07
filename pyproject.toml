@@ -1,7 +1,7 @@
 [project]
 name = "agentic-okr"
 version = "0.1.0"
-description = "Add your description here"
+description = "OKRs as code: a machine-readable goal spec, plus the agent architecture that keeps AI work pointed at it."
 readme = "README.md"
 authors = [
     { name = "Ash Pirnia", email = "ash.pirnia@gmail.com" }
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-agentic-okr = "agentic_okr:main"
+okr = "agentic_okr:main"
 
 [build-system]
 requires = ["uv_build>=0.11.19,<0.12.0"]
