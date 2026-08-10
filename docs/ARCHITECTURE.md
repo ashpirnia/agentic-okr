@@ -180,8 +180,93 @@ The property that matters: the loop does not assume the spec was right. It assum
 
 ---
 
+## 4. The OKR graph data model
+
+What an OKR repo actually contains, per ADRs [0005](adr/0005-node-types.md), [0006](adr/0006-edge-semantics.md), [0007](adr/0007-id-scheme-and-layout.md), [0008](adr/0008-okr-yaml-marker.md) and [0009](adr/0009-guardrails-and-anti-targets.md).
+
+```mermaid
+erDiagram
+    OKR_YAML {
+        int schema_version "required, exact match"
+        string period "required, e.g. 2026-Q3"
+        path okr_dir "required"
+        path metrics_file "optional, default metrics.yaml"
+    }
+
+    OBJECTIVE {
+        slug id PK "team-namespaced, author-chosen"
+        string statement
+        string owner "accountable lead"
+        enum commitment "committed | aspirational, required"
+    }
+
+    KEY_RESULT {
+        slug id PK "team-namespaced, never parent-namespaced"
+        string statement
+        enum type "milestone | metric, required"
+        string owner "required, enables co-owned objectives"
+        enum commitment "optional, overrides its objective"
+        slug metric FK "metric type only"
+        number target "metric type only"
+    }
+
+    METRIC {
+        slug id PK "window is part of identity"
+        string definition
+        string unit
+    }
+
+    GUARDRAIL {
+        slug metric FK "must resolve"
+        number must_not_exceed "exactly one of the two"
+        number must_not_fall_below
+    }
+
+    ANTI_TARGET {
+        string description "the gaming move, one sentence"
+        enum origin "authored | proposed"
+        slug_list watched_by "optional; metrics that would detect it"
+    }
+
+    RESTRAINT {
+        string text "the prohibition"
+    }
+
+    SUCCESS_CRITERION {
+        string text "what done means to a reader with no judgment"
+    }
+
+    OKR_YAML ||--|{ OBJECTIVE : "scopes the repo"
+    OKR_YAML ||--|{ METRIC : "locates via metrics_file"
+
+    OBJECTIVE ||--|{ KEY_RESULT : "contains — the implicit supports edge"
+    OBJECTIVE }o--o{ OBJECTIVE : "supports"
+    OBJECTIVE }o--o{ KEY_RESULT : "supports — the cascade"
+    KEY_RESULT }o--o{ OBJECTIVE : "supports — additional parents"
+    KEY_RESULT }o--o{ KEY_RESULT : "depends_on — interlocking"
+
+    KEY_RESULT ||--o{ GUARDRAIL : "embeds"
+    KEY_RESULT ||--o{ ANTI_TARGET : "embeds"
+    KEY_RESULT ||--o{ RESTRAINT : "embeds"
+    KEY_RESULT ||--o{ SUCCESS_CRITERION : "embeds"
+
+    KEY_RESULT }o--o| METRIC : "targets"
+    GUARDRAIL }o--|| METRIC : "references"
+    ANTI_TARGET }o--o{ METRIC : "watched_by"
+```
+
+**Only three entities have identity.** `OBJECTIVE`, `KEY_RESULT` and `METRIC` carry IDs and can be referenced from elsewhere. The other four are embedded in the key result that sets them — they are drawn as entities here because they have structure, not because they are addressable. The test that produced that split: *something outside its parent must reference it by ID*.
+
+**Every relation between the three identified entities is an edge in the goal graph.** Note `KEY_RESULT }o--o{ OBJECTIVE` — a key result may support several parent objectives, which is what makes this a network rather than a tree. Containment is the *primary* supports edge, materialised by the loader rather than written by an author.
+
+**`METRIC` is the pivot.** It is referenced three ways — as a key result's target, as a guardrail's subject, and as an anti-target's detector — and its identity is the join key to the Conductor's measurement sources and the Shepherd's readings. That is why the measurement window lives inside the identifier rather than beside it.
+
+**Two things the notation cannot carry.** ER diagrams have no place for attributes on a relationship, so the optional `origin: cascaded | laddered` on a `supports` edge ([ADR-0006](adr/0006-edge-semantics.md)) is invisible here. And cardinality cannot express that a key result's `metric` and `target` are required when `type: metric` and forbidden when `type: milestone` — that is a validation rule, not a structural one.
+
+---
+
 ## What these diagrams do not show
 
-- **The OKR graph's data model.** Whether a guardrail is a first-class node or an embedded field is decided by the Phase 1 schema ADRs. An ERD is a deliverable of that work, not an input to it.
-- **The Conductor and Shepherd store schemas.** Both components are cut from v1; drawing their tables would present speculation as specification.
-- **Anything about cycles or quarters.** v1 holds one live graph; history is git history ([ADR-0003](adr/0003-v1-scope.md)).
+- **The Conductor and Shepherd store schemas.** Both components are cut from v1; drawing their tables would present speculation as specification. The Conductor's store is not even designed — see ADR-0001 Amendment 1.
+- **Anything about cycles or quarters** beyond `period`. v1 holds one live graph; history is git history ([ADR-0003](adr/0003-v1-scope.md)).
+- **The completeness score.** It is derived from this model rather than stored in it, and its rubric is not yet decided.
