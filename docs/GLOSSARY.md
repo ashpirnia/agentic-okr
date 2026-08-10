@@ -105,11 +105,15 @@ Something you would never do to hit the number, stated outright: *a ticket may n
 
 Named restraint because it makes visible the self-restraint humans supply silently and agents do not.
 
+**Normative**, where an anti-target is descriptive. A restraint is a rule the owner declares; an anti-target is a move the Champion predicts. They pair — the restraint above forbids the anti-target below — but they come from different acts, which is why they are separate fields.
+
 ### ⚙️ Anti-target
 
 A one-sentence description of an action that would technically hit the metric while betraying its spirit: *mass-close tickets with a canned reply and let the customer chase you.*
 
 The sharpest instrument here. Its diagnostic form, from piece 2: *for each key result, can you write down in one sentence the action that would technically hit the metric but violate the spirit?* If you can, your team has been silently restraining themselves — and that restraint will not be in the agents you deploy against the same target.
+
+Carries an `origin` recording whether the owner authored it or the Champion proposed it and a human confirmed. It may also list the metrics that would detect the move; an anti-target nothing watches is a worry rather than a control.
 
 ### ⚙️ Metric
 
@@ -118,6 +122,8 @@ A named, defined quantity the organisation measures: `reopen_rate_7d`, "share of
 A first-class node, because a metric's identity is the join key across all three stores — git, the Conductor's measurement sources, and the Shepherd's readings. The same metric may be a key result target for the team transforming it and a guardrail for the team protecting it.
 
 Not every KPI belongs here. A metric enters an OKR repo when a key result targets it or a guardrail watches it, and not otherwise.
+
+**The measurement window is part of the identity**, not a separate field: `reopen_rate_7d` and `reopen_rate_30d` are two metrics, because the Shepherd reads two different series and must tell them apart by identity alone.
 
 ### ⚙️ Interpretive layer
 
