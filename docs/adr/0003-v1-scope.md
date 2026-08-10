@@ -27,7 +27,9 @@ The constraint that matters most: the schema is a published contract. ADR-0002 e
 
 ### Cut, with the reason
 
-**No web UI.** A CLI and a directory of YAML. For this audience a terminal and a PR diff are more credible than a dashboard, and a UI is where a project like this quietly becomes an OKR tool instead of an argument about goal specification.
+**No web UI.** A CLI and a directory of YAML. A UI is where a project like this quietly becomes an OKR tool instead of an argument about goal specification.
+
+*Corrected 2026-08-07:* this cut originally read "for this audience a terminal and a PR diff are more credible than a dashboard." That reasoned about the **article's** readers — technical leaders — not the **tool's** users, who are goal owners: heads of support, heads of product. Those are different people, and neither git nor YAML is a reasonable interface for the second group. The cut stands, but on the honest ground that v1 is a demonstration rather than a product, and with its consequence stated: **v1 has no adoption path for a non-technical goal owner.** The intended surface is the conversational Champion, whose interview loop is also cut from v1. See [ADR-0001](0001-git-holds-intent.md) Amendment 2.
 
 **No observation store, and no progress tracking.** Per ADR-0001, v1 has no Shepherd and therefore nothing that reads or writes metric values. `okr validate` runs against a directory with nothing to install or connect. *Note:* the Champion's LangGraph checkpointing uses SQLite, which is agent-run persistence, not an observation store. The cut is about tracking KR progress, not about all persistence.
 

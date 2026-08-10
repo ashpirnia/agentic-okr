@@ -1,6 +1,6 @@
 # ADR-0001 — Git holds intent, the Shepherd's store holds observation
 
-**Status:** Accepted — amended 2026-08-07, see Amendments
+**Status:** Accepted — amended twice on 2026-08-07, see Amendments
 **Date:** 2026-08-07
 **Deciders:** Ash, Claude
 
@@ -73,7 +73,7 @@ What never goes in the OKR repo:
 
 ## Amendments
 
-### 2026-08-07 — A third category: measurement configuration
+### Amendment 1 · 2026-08-07 — A third category: measurement configuration
 
 This ADR originally described two categories, intent and observation, and implied they were exhaustive. They are not. Clarifying the three roles' responsibilities surfaced a third:
 
@@ -93,4 +93,26 @@ The three-way boundary is therefore:
 | Measurement config | "Reopen rate comes from Zendesk API X" | Conductor | A developer, at registration |
 | Observation | "Reopen rate was 8.1% on Tuesday" | Shepherd (its store) | A machine, on a schedule |
 
-The guardrail metric's identity is the join key across all three. ADR-0008 must choose a naming scheme that makes a three-way join natural, not just the two-way join noted in the original Consequences.
+The guardrail metric's identity is the join key across all three. The guardrail-metrics ADR must choose a naming scheme that makes a three-way join natural, not just the two-way join noted in the original Consequences.
+
+### Amendment 2 · 2026-08-07 — SQLite reconsidered, and the decision reaffirmed
+
+The original Alternatives section rejected "everything in a database" while describing a *server* database — provisioning, a host, credentials. That was arguing against Postgres. **SQLite has none of those costs**, and rejecting it by association was unfair. It deserves a real hearing, recorded here so that it is a considered alternative rather than an unexamined assumption.
+
+**What SQLite genuinely wins.** A substantial part of the Phase 1 plan simply disappears: foreign keys make dangling references impossible; `UNIQUE` constraints make duplicate IDs impossible; the `okr.yaml` marker becomes unnecessary because the database file is itself the marker; the loader shrinks to a query; migration becomes a solved problem with known tooling, applied to one file rather than to files scattered across adopters' repositories. Graph questions become `SELECT`s rather than traversal code we write, test and maintain. This is not a marginal saving.
+
+**What it cannot do.** A `.db` file is binary. `git diff` shows nothing, no pull request can be reviewed, and `git blame` on a guardrail is impossible.
+
+That is not one lost feature among several. It is the mechanism the series argues for. Piece 3's conclusion is a discovered gaming trick becoming specification: *"A human merges it, and the trick is on the page."* In SQLite there is no page — there is a row, and nobody reviews a row without an interface. Choosing SQLite therefore forces a web UI, reversing [ADR-0003](0003-v1-scope.md)'s cut and placing the project in a category with Viva Goals, Lattice and Perdoo, competing on features rather than on the one property that is actually different.
+
+A second, more practical objection: six teams authoring in the same week is clean parallel work across separate YAML files, and an unresolvable binary merge conflict in a single database file.
+
+**The objection that nearly carried it, and why it does not.** The strongest case against YAML is not technical: goal owners are heads of support and product, not engineers, and neither git nor YAML is a reasonable interface for them. That is true.
+
+But it argues for a *surface*, not for SQLite — because **the UX problem is identical under both**. A support lead cannot edit a `.db` file either. Both options require a conversation, a form, or some other surface between the human and the store. What differs is only what survives once that surface exists: with git, review, diffs, blame and an organisation owning its goals in a format outliving this tool; with SQLite, queries and referential integrity.
+
+UX is therefore neutral between the two, and the decision turns on what is retained rather than on who can read the file. It is also a well-trodden pattern — Netlify CMS, TinaCMS and Contentful's git sync all put a form in front of a git-backed store, and editors in those systems never see the underlying files.
+
+**What this exchange did change.** ADR-0003 justified cutting the web UI as "CLI and YAML is more credible for this audience." That reasoned about the *article's* readers, technical leaders, and not the *tool's* users, who are goal owners. Those are different people and the justification conflated them. The consequence is real and now stated plainly rather than implied: **v1 has no adoption path for a non-technical goal owner.** The intended surface is the conversational Champion, and the interactive interview loop is cut from v1.
+
+**The hybrid, for the record.** YAML remains the source of truth while SQLite becomes a *derived* index the loader builds — gitignored and rebuilt on demand. This keeps review and gains queries. It buys nothing at the scale v1 operates at, where the graph fits comfortably in memory, but it is the shape of the answer if querying ever matters, and it means choosing YAML now forecloses nothing.

@@ -103,13 +103,16 @@ The practical payoff: when the Shepherd discovers that agents found a way to gam
 
 Early, and pre-alpha. The schema is being designed; nothing here is production-ready and the format is unstable by intention.
 
+**Who v1 is for.** People comfortable with a terminal, git and YAML. Goal owners — heads of support, heads of product — are the people this is ultimately *for*, but they are not expected to hand-write specs, and v1 does not yet give them a way not to. The intended surface is the Champion: a conversation where the agent interrogates an objective and emits the spec, so the owner never opens a file. v1 ships the batch-critique half of that, which still assumes someone can read a YAML pull request. Closing that gap is the first thing after v1, not a detail.
+
 The first milestone is a demoable Champion: a facilitation workflow that takes a vague, human-written OKR set and draws out the success criteria, guardrail metrics and anti-targets its authors were silently assuming.
 
 Roughly in order:
 
 - [ ] v1 OKR schema and YAML loader
 - [ ] Graph model and validation (referential integrity across a network of goals, not a tree)
-- [ ] Champion facilitation workflow
+- [ ] Champion facilitation workflow (batch critique)
+- [ ] A surface goal owners can actually use — conversational Champion, then a form over git
 - [ ] Conductor agent registry and wiring lint
 - [ ] Shepherd continuous watch and feedback loop
 

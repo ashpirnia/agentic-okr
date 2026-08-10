@@ -75,6 +75,14 @@ One objective shared by several teams, each owning different key results under i
 
 A declared dependency where one team's key result commits to unblocking another's. Cross-functional work made explicit rather than left implicit and siloed.
 
+Declared as `depends_on` by the blocked key result. The provider's commitment comes from reviewing and merging the pull request, not from a field in the schema.
+
+### ⚙️ Supports
+
+The hierarchy edge: a child objective or key result contributes to a parent. Covers both cascading and laddering, which produce the same relationship and differ only in provenance — recorded, when it matters, in an optional `origin` field.
+
+Always declared on the child. A key result nested inside an objective supports it implicitly; an explicit list adds further parents.
+
 ---
 
 ## Making intent explicit
