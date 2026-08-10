@@ -55,6 +55,8 @@ The `anti_targets` field is the sharpest instrument here, and it comes straight 
 
 That piece has five more questions worth running against your own OKR set. They need no tooling and will surface uncomfortable things.
 
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams of the components, the ownership boundary, and the loop — with what is built in v1 marked apart from what is designed and deferred.
+
 ## Two repos, not one
 
 This distinction matters, so it is worth being explicit:
