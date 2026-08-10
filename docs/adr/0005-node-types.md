@@ -67,11 +67,11 @@ Two supporting rules:
 
 **Requiring every key result to name a metric.** Maximally strict, and it forces exactly the discipline the series argues for. Rejected because milestone key results are real, and an org that cannot express one will invent a fake metric to satisfy the validator. A fake metric is worse than an admitted milestone: it looks measured, so nothing flags it, and it is precisely the ceremonial KR piece 2 describes teams learning to ignore.
 
-**Separate node types for committed versus aspirational key results.** Doerr distinguishes them and organisations do treat them differently. Rejected for v1 as a field-level concern at most, not a structural one, and nothing in the loop currently behaves differently for the two. It can be added as an optional field the moment something acts on the distinction. *(Note: this is a different axis from the `milestone`/`metric` type added in the Amendments below — commitment level versus output shape. Both are field-level; only the second earned its place in v1.)*
+**Separate node types for committed versus aspirational key results.** Doerr distinguishes them and organisations do treat them differently. Rejected as a *structural* concern — it is field-level at most. **The field-level half of this was reversed on 2026-08-07; see Amendment 2.** The rejection of separate *node types* stands.
 
 ## Amendments
 
-### 2026-08-07 — Alignment with Doerr's OKR structure
+### Amendment 1 · 2026-08-07 — Alignment with Doerr's OKR structure
 
 Reviewing the model against *Measure What Matters* produced three changes. None disturb the node/embedded split; two are field-level and one reverses a decision made in the original draft.
 
@@ -96,3 +96,27 @@ It also implies a discipline the metrics section must keep: it is not a dumping 
 - **Edges must be able to target a key result, not only an objective.** Doerr's cascade turns a parent's key result into the child level's objective. The edge ADR must permit `Objective → KeyResult`.
 - **Interlocking key results need a dependency edge**, distinct from `supports`/`ladders_to`. Goal hierarchy and delivery dependency are different relationships with different cycle legality. Piece 1 claims the Champion "knows where the critical dependencies sit", so without this the tool cannot back a published claim. v1 lets a spec *declare* a dependency; *detecting* that a dependency has stalled needs live data and remains the Conductor's job, safely outside v1.
 - **The completeness rubric gains an objective-level check for the build trap.** An objective whose key results are all milestones is a to-do list measuring effort rather than impact. This is the first rubric rule that operates on an objective rather than a key result, and it is a strong facilitation prompt: *"you have listed four things you will ship — how will you know any of it worked?"*
+
+### Amendment 2 · 2026-08-07 — Commitment level, reversing a rejection
+
+**A `commitment: committed | aspirational` field is added.** This reverses the field-level half of the "committed versus aspirational" rejection above. The rejection of separate *node types* stands.
+
+**Why the original reasoning was wrong.** It read: "nothing in the loop currently behaves differently for the two." That is true of *achievement* scoring — v1 tracks no achievement, so nothing can penalise a team for missing a moonshot, which is the usual argument for the distinction. But it is false of **completeness** scoring, which is squarely in v1.
+
+A committed key result without guardrails is more dangerous than an aspirational one without guardrails, because a committed goal is exactly where the pressure to hit the number at any cost is highest. Miss it and it is a failure; that is the condition under which people reach for the action they would otherwise have restrained themselves from. Commitment level therefore changes what a well-specified key result requires, and it sharpens the Champion's central prompt: *"this is a must-hit — what would someone do to hit it that you would regret?"* is a better question than the generic form.
+
+The field passes the thin-v1 test on its own terms: "is this a must-hit or a stretch?" is a Champion question, and something in v1 reads the answer.
+
+**Placement: on both `Objective` and `KeyResult`, with the key result overriding.**
+
+- `Objective.commitment` is **required**. Every objective declares its ambition; there is no default and no "unset" case to interpret.
+- `KeyResult.commitment` is **optional**. When absent, the key result inherits its objective's value. When present, it overrides.
+
+This is the more permissive of the options considered, and it was chosen for fidelity: a stretch objective genuinely can carry one must-hit key result underneath it, and forcing that into a single objective-level value would misrepresent it. The cost is override semantics, which is why the inheritance rule is stated here rather than left to the implementation to invent.
+
+**Guard against the obvious misuse.** Doerr's expected scores — 1.0 for committed, 0.7 for aspirational — mean commitment level is a claim about *ambition*, not a difficulty dial to be turned down when a goal looks hard. An objective where every key result overrides to `aspirational` is a signal worth surfacing, in the same family as the build trap. Whether the rubric flags it is the completeness ADR's call; noting it here so the possibility is not lost.
+
+**Two related consequences landing elsewhere:**
+
+- **The repo declares its cycle.** Doerr defines key results as "specific and time-bound." Rather than a per-key-result deadline, `okr.yaml` gains a `period` (for example `2026-Q3`), which time-bounds every key result in the repo by construction — consistent with [ADR-0003](0003-v1-scope.md)'s single-cycle cut. This is a requirement for the repo-marker ADR, not a schema change here.
+- **Edge provenance must not be foreclosed.** Doerr warns that deep top-down cascading stifles agility and advocates roughly half of OKRs emerging bottom-up. Measuring that balance requires knowing how a connection came about. The *relationship* is identical either way — a child supports a parent — so this belongs as an optional `origin: cascaded | laddered` field on the edge rather than as two edge types. v1 need not compute the balance, but the edge model must not make it impossible. A requirement for the edge-semantics ADR.

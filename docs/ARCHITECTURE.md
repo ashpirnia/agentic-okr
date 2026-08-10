@@ -2,6 +2,8 @@
 
 Three roles, three stores, one loop. Diagrams are Mermaid so they render on GitHub, diff in review, and stay in the repo alongside the decisions they illustrate.
 
+Terms used here are defined in [GLOSSARY.md](GLOSSARY.md).
+
 **Read the legend.** Only a fraction of this is built. Solid means it exists in v1; dashed means it is designed and deliberately deferred by [ADR-0003](adr/0003-v1-scope.md).
 
 ---

@@ -61,21 +61,11 @@ Validation violations get machine-readable codes (e.g. `E001_DANGLING_REF`), bec
 
 ## Vocabulary
 
-Fixed terms, taken from the published articles. Use them exactly; do not introduce synonyms.
+**[`docs/GLOSSARY.md`](docs/GLOSSARY.md) is the single source for every term.** Read it before writing user-facing text, field docstrings, or agent prompts.
 
-| Term | Means |
-| :--- | :---- |
-| **OKR repo** | An adopting organisation's goal repo. YAML only, rooted at an `okr.yaml`. Never means *this* repo. |
-| **Goal graph** | The resolved in-memory network built from one OKR repo. |
-| **Objective** | The qualitative thing you want to achieve. |
-| **Key result** | The measurable signal that you are getting there. |
-| **Success criterion** | What "done" actually means, written for a reader with no judgment. |
-| **Guardrail metric** | A metric that must hold while the key result moves. Definition only in git; readings live elsewhere. |
-| **Anti-target** | A one-sentence description of an action that would hit the metric while betraying its spirit. |
-| **Restraint clause** | A thing you would never do to hit the number, stated outright. |
-| **Wiring** | The link from an agent's goal to the OKR it serves. Conductor's job; reserved and unpopulated here. |
-| **Lint** | The Conductor's static, wiring-time check that an agent's target matches the spec's intent. |
-| **Watch list** | The set of guardrail metrics the Shepherd monitors. Grows through the loop. |
+Do not restate a definition here, in the README, in a docstring, or in a prompt. Link to the glossary instead. Definitions copied into four places drift, and the drift that matters is between the Champion's prompt (which explains what an anti-target *is*, in order to elicit one) and the schema's docstring (which says what gets stored). When those disagree the agent elicits the wrong thing, and both halves look correct in isolation.
+
+Use the terms exactly as defined; never introduce a synonym. If a definition needs to change, that is an ADR, not an edit — several are published in the article series.
 
 ## Layout
 
