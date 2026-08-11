@@ -80,6 +80,7 @@ def validate(graph: Graph) -> Report:
         *_cycles(graph),
         *_content_rules(graph),
         *_orphans(graph),
+        *_objectives_without_key_results(graph),
         *_commitment_dials(graph),
         *_unused_declarations(graph),
     ]
@@ -520,6 +521,17 @@ def _key_result_content(node: Node, spec: KeyResult) -> list[Violation]:
 # --- Warnings --------------------------------------------------------------------------
 
 
+def _connected(graph: Graph, node: Node) -> bool:
+    """Whether anything supports this objective, or it supports anything.
+
+    Containment counts, because nesting is itself a supporting edge — which is what makes
+    an objective with key results beneath it connected by definition.
+    """
+    return bool(
+        graph.outgoing(node.id, EdgeKind.SUPPORTS) or graph.incoming(node.id, EdgeKind.SUPPORTS)
+    )
+
+
 def _orphans(graph: Graph) -> list[Violation]:
     """An objective connected to nothing in either direction.
 
@@ -530,7 +542,7 @@ def _orphans(graph: Graph) -> list[Violation]:
     """
     violations = []
     for node in graph.objectives:
-        if graph.outgoing(node.id, EdgeKind.SUPPORTS) or graph.incoming(node.id, EdgeKind.SUPPORTS):
+        if _connected(graph, node):
             continue
         violations.append(
             Violation(
@@ -543,6 +555,33 @@ def _orphans(graph: Graph) -> list[Violation]:
             )
         )
     return violations
+
+
+def _objectives_without_key_results(graph: Graph) -> list[Violation]:
+    """An objective that other goals ladder up to, with nothing written under it.
+
+    Legal, and sometimes deliberate: a top-level objective can be the point several teams
+    aim at, and the work is genuinely in their files rather than in it. What it still lacks
+    is any way to tell whether the ambition it states was reached.
+
+    Never raised alongside `W102_ORPHAN_OBJECTIVE`, which covers an objective with no key
+    results *and* no connections at all. That is the same absence with more missing around
+    it, and its message already says the objective has nothing beneath it — two warnings on
+    one line would be one cause reported twice.
+    """
+    return [
+        Violation(
+            Code.OBJECTIVE_WITHOUT_KEY_RESULTS,
+            f"'{node.id}' has no key results of its own. Other goals ladder up to it, which "
+            f"is a legitimate way to use an objective — but nothing written under it says "
+            f"whether this objective was reached, so as it stands it states an ambition and "
+            f"no way to check it.",
+            file=node.source.file,
+            line=node.source.line,
+        )
+        for node in graph.objectives
+        if not graph.key_results_of(node.id) and _connected(graph, node)
+    ]
 
 
 def _commitment_dials(graph: Graph) -> list[Violation]:

@@ -451,3 +451,38 @@ The prose makes a checkable promise, so it is checked: uncommenting the example 
 it must report exactly `success criteria, guardrails, anti-targets` and `2 of 5`. If the
 rubric or the example changes and the other does not, that test fails rather than a reader
 finding out.
+
+---
+
+## `W106_OBJECTIVE_WITHOUT_KEY_RESULTS`, and one check with two wordings
+
+The gap this closed: an objective with nothing written inside it validated completely
+clean, and scored `0 of 1` saying *"missing: a key result that moves a number"* — which
+describes the build trap, a different problem. A build trap measures effort instead of
+impact; an empty objective measures nothing.
+
+**`W106` is never raised alongside `W102_ORPHAN_OBJECTIVE`.** An objective with no key
+results *and* no connections at all is already reported as an orphan, and that message
+already says it has nothing beneath it. Two warnings on one line would be one cause
+reported twice, which the grouping rule elsewhere in this log exists to prevent. So `W106`
+covers the case `W102` does not: an objective others genuinely ladder up to, with nothing
+inside it. The registry row was extended to say so — the two rows describe adjacent
+situations and a reader needs to know they do not both fire.
+
+**This is the first warning that is also a scored gap.** It sat against ADR-0011's "nothing
+is both", which turned out never to have contemplated warnings — raised during
+implementation rather than decided in code, and now settled by that ADR's Amendment 1: the
+principle scopes to errors, a warning may coincide with an existing dimension failing, and
+it may never add a dimension.
+
+**So the two failures share one check, distinguished by wording.** `Check` gained an
+optional `missing_as`, which overrides the dimension's default phrase for one node.
+`NodeScore.missing` still returns dimensions, because the dimension is the stable identity
+a consumer matches on; the new `gaps` returns the words a person reads. The rubric stays
+five checks and `0 of 1` stays right for both, which was the point: only the sentence was
+wrong.
+
+The three-state progression the amendment describes — no key results warns and fails,
+milestones only clears the warning and still fails, a metric clears both — is a checkable
+claim about two subsystems agreeing, so `tests/test_score.py` checks it rather than
+trusting the prose.

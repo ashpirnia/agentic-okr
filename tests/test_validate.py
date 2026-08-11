@@ -475,6 +475,47 @@ def test_a_top_level_objective_with_key_results_is_not_an_orphan(tmp_path: Path)
     assert check(tmp_path, GOALS).warnings == ()
 
 
+def test_an_objective_others_ladder_up_to_with_nothing_written_under_it(
+    tmp_path: Path,
+) -> None:
+    """A legitimate aggregation point that still says nothing checkable about itself."""
+    goals = (
+        GOALS.replace(
+            "  - id: team.quality\n", "  - id: team.quality\n    supports: [company.ambition]\n"
+        )
+        + """  - id: company.ambition
+    statement: The thing everything ladders up to
+    owner: lead
+    commitment: committed
+"""
+    )
+
+    report = check(tmp_path, goals)
+
+    assert codes(report.warnings) == [Code.OBJECTIVE_WITHOUT_KEY_RESULTS]
+    assert report.ok
+
+
+def test_an_objective_with_neither_key_results_nor_connections_is_only_an_orphan(
+    tmp_path: Path,
+) -> None:
+    """One cause, one warning. `W102` already says the objective has nothing beneath it."""
+    goals = (
+        GOALS
+        + """  - id: team.stranded
+    statement: Something nobody finished wiring up
+    owner: lead
+    commitment: committed
+"""
+    )
+
+    assert codes(check(tmp_path, goals).warnings) == [Code.ORPHAN_OBJECTIVE]
+
+
+def test_an_objective_with_key_results_is_never_reported_as_empty(tmp_path: Path) -> None:
+    assert Code.OBJECTIVE_WITHOUT_KEY_RESULTS not in codes(check(tmp_path, GOALS).warnings)
+
+
 def test_a_committed_objective_whose_key_results_all_override_to_aspirational(
     tmp_path: Path,
 ) -> None:

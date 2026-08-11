@@ -133,8 +133,13 @@ def _commitment(scored: NodeScore) -> Text:
 
 
 def _missing(scored: NodeScore) -> Text:
-    """The specific gaps, named. A count would not tell anybody what to go and write."""
-    return Text(f"missing: {', '.join(dimension.missing for dimension in scored.missing)}")
+    """The specific gaps, named. A count would not tell anybody what to go and write.
+
+    Read off the checks rather than the dimensions, because one check can fail for two
+    reasons a reader would act on differently — an objective with only milestones and an
+    objective with nothing at all both fail `O1`, and are not the same thing to fix.
+    """
+    return Text(f"missing: {', '.join(scored.gaps)}")
 
 
 # --- For a machine ----------------------------------------------------------------------
@@ -177,7 +182,7 @@ def _node(scored: NodeScore) -> dict[str, Any]:
         "commitment": scored.commitment.value,
         "checks": {check.dimension.value: check.passed for check in scored.checks},
         "missing": [dimension.value for dimension in scored.missing],
-        "missing_names": [dimension.missing for dimension in scored.missing],
+        "missing_names": list(scored.gaps),
     }
 
 

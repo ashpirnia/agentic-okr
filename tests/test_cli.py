@@ -296,6 +296,23 @@ def test_score_json_carries_every_check_so_the_total_can_be_recounted(repo: Path
     assert len(checks) == 19
 
 
+def test_score_tells_an_empty_objective_apart_from_a_build_trapped_one(repo: Path) -> None:
+    """Same check, same 0 of 1, two different things to go and do."""
+    goals = repo / "okrs" / "company" / "2026-q3.yaml"
+    goals.write_text(
+        goals.read_text(encoding="utf-8") + "  - id: company.ambition\n"
+        "    statement: The thing everything ladders up to\n"
+        "    owner: ceo\n"
+        "    commitment: committed\n",
+        encoding="utf-8",
+    )
+
+    output = run("score", str(repo)).output
+
+    assert "missing: key results — this objective has none" in output
+    assert "missing: a key result that moves a number" in output
+
+
 def test_score_of_a_new_repo_says_there_is_nothing_to_score(tmp_path: Path) -> None:
     """A scaffold scores 0 of 0. That is not the same as scoring badly."""
     run("init", str(tmp_path), "--period", "2026-Q3")

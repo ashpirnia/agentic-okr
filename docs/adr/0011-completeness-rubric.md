@@ -1,6 +1,6 @@
 # ADR-0011 — Completeness scoring rubric
 
-**Status:** Accepted
+**Status:** Accepted — amended 2026-08-07, see Amendments
 **Date:** 2026-08-07
 **Deciders:** Ash, Claude
 
@@ -92,3 +92,26 @@ No weights. Denominators vary honestly with what applies. A reader can recount e
 **Scoring commitment level directly** — for instance, requiring anti-targets on committed key results and merely scoring them on aspirational ones. Rejected because both genuinely need them; the difference is consequence, not requirement. Encoding it as a different denominator would mean a committed key result and an aspirational one with identical specs scored differently, which is indefensible.
 
 **Making the objective's owner or commitment a scored dimension.** Both are required by ADR-0010 and ADR-0005, so their absence is already a validation error. Including them would double-count and inflate every score by two.
+
+## Amendments
+
+### Amendment 1 · 2026-08-07 — "Nothing is both" governs errors, not warnings
+
+The organising principle reads: *if a field's absence is illegal, it is a validation error and never appears in the score; if its absence is legal but weakens the spec, it is a scored dimension. Nothing is both.*
+
+Implementing `W106_OBJECTIVE_WITHOUT_KEY_RESULTS` exposed that the sentence never contemplated warnings. An objective with no key results is *legal* — a top-level objective can be an aggregation point for teams laddering to it — so it is a warning rather than an error, and it is also the reason the objective's one scored check fails.
+
+**The principle scopes to errors.** "Nothing is both" means nothing is both a validation *error* and a scored dimension, because that is where double-counting would occur: the score would inflate by re-counting things the validator already refuses. Warnings mark things that are legal, which is the same category scoring covers, so an overlap there is not double-counting — it is two artefacts answering different questions about one absence. The validator asks whether the graph holds together; the score asks how much is written down.
+
+**The constraint that keeps this from spreading: a warning may coincide with an existing dimension failing. It may never add a dimension.** Adding an `O2` for "has any key results" would have asked every objective two questions instead of one, changing every denominator and moving the roll-up — to express something that is not a second requirement. The rubric stays at four key-result checks and one objective check.
+
+**Where a warning and a dimension do coincide, the wording must differ.** Same check, same `0 of 1`, different sentence, because the reader has a different thing to go and do:
+
+```
+◆ company.north-star    0 of 1  committed   missing: key results — this objective has none
+◆ platform.reliability  0 of 1  committed   missing: a key result that moves a number
+```
+
+The stable identity a consumer matches on remains the dimension; only the phrase shown to a human varies.
+
+**The three states form a progression**, which is the check working as intended rather than a coincidence: no key results raises the warning and fails the dimension; adding a milestone key result clears the warning and leaves the dimension failing as a build trap; adding a metric key result clears both.

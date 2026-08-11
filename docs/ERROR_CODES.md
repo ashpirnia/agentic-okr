@@ -104,6 +104,7 @@ Legal, and occasionally correct. Reported; the run still exits zero.
 | `W103_ALL_KRS_ASPIRATIONAL` | An objective declared `committed` whose key results all override to `aspirational` — commitment level used as a difficulty dial rather than a claim about ambition. |
 | `W104_UNUSED_METRIC` | A metric is declared but nothing targets or guards it. Harmless, but usually a leftover or a typo elsewhere. |
 | `W105_UNUSED_OWNER` | An owner is declared but owns nothing. |
+| `W106_OBJECTIVE_WITHOUT_KEY_RESULTS` | An objective contains no key results. Legal — a top-level objective can act as an aggregation point for teams laddering to it — but it states an ambition with no way to know whether it was reached. Distinct from the build trap, which is an objective whose key results are *all* milestones: that measures effort instead of impact, this measures nothing. Not raised alongside `W102`, which is the same absence with nothing connected around it either. |
 
 ---
 

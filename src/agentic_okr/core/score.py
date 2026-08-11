@@ -67,6 +67,11 @@ _MISSING: Final[dict[Dimension, str]] = {
     Dimension.NOT_BUILD_TRAPPED: "a key result that moves a number",
 }
 
+#: What `O1` is missing when an objective has nothing under it at all, rather than only
+#: things to ship. `okr validate` reports the same situation as `W106`, which is where the
+#: explanation lives; this is the two-word version that fits in a column.
+_EMPTY: Final = "key results — this objective has none"
+
 
 @dataclass(frozen=True, slots=True)
 class Check:
@@ -74,6 +79,22 @@ class Check:
 
     dimension: Dimension
     passed: bool
+
+    missing_as: str | None = None
+    """What to call this gap here, when the dimension's own wording would mislead.
+
+    One check can fail for reasons a reader would act on differently. `O1` fails both for
+    an objective whose key results are all milestones — effort measured instead of impact —
+    and for an objective with no key results at all, which measures nothing. Same check,
+    same `0 of 1`, two different things to go and do, so the sentence differs and the
+    arithmetic does not. Naming both "a key result that moves a number" would describe the
+    first while a reader was looking at the second.
+    """
+
+    @property
+    def missing(self) -> str:
+        """How to name this gap: the check's own wording, or the dimension's."""
+        return self.missing_as or self.dimension.missing
 
 
 @dataclass(frozen=True, slots=True)
@@ -119,8 +140,13 @@ class NodeScore:
 
     @property
     def missing(self) -> tuple[Dimension, ...]:
-        """The dimensions that failed, in rubric order. Naming them is the useful part."""
+        """The dimensions that failed, in rubric order. The stable identity of each gap."""
         return tuple(check.dimension for check in self.checks if not check.passed)
+
+    @property
+    def gaps(self) -> tuple[str, ...]:
+        """What is missing, in words. What a report prints, and what a reader acts on."""
+        return tuple(check.missing for check in self.checks if not check.passed)
 
 
 @dataclass(frozen=True, slots=True)
@@ -211,6 +237,11 @@ def _objective_score(graph: Graph, objective: Node) -> NodeScore:
     a quarter of delivery with nothing that says whether any of it worked — and it is only
     visible when the key results are read together, which is why it is scored on the
     objective rather than on any one of them.
+
+    An objective with no key results at all fails the same check for a different reason,
+    and is told apart in the wording rather than in the arithmetic. A build trap measures
+    effort instead of impact; an empty objective measures nothing. `0 of 1` is right for
+    both — what somebody does next is not.
     """
     key_results = graph.key_results_of(objective.id)
     moves_a_number = any(
@@ -220,7 +251,7 @@ def _objective_score(graph: Graph, objective: Node) -> NodeScore:
     return NodeScore(
         objective,
         _declared_commitment(objective),
-        (Check(Dimension.NOT_BUILD_TRAPPED, moves_a_number),),
+        (Check(Dimension.NOT_BUILD_TRAPPED, moves_a_number, _EMPTY if not key_results else None),),
     )
 
 

@@ -28,7 +28,14 @@ This is the distinction most likely to be got wrong, and it is wrong in a way th
 
 A support lead raising a PR to add a guardrail must never have to look at our `src/` tree. When writing docs, error messages or CLI help, always be explicit about which repo you mean — say "your OKR repo", never a bare "the repo".
 
-`examples/` in this repo is the one deliberate overlap: hand-written OKR sets used as test fixtures. They must be **shaped exactly like a real OKR repo**, marker file and all, or they will quietly encode assumptions no real repo satisfies.
+**`examples/` and `tests/fixtures/` are different things and must never be the same files.**
+
+- **`examples/`** is shipped and read by adopters. Everything in it is something to copy: exemplary specs, a plausible organisation, no field left out that a real goal would carry. Nothing in it may model a mistake.
+- **`tests/fixtures/`** exists for coverage. Deliberately bad specs belong here — an anti-target with no defence, a build-trapped objective, a dangling reference — because a check cannot be proven to fire without input that trips it.
+
+The two pull in opposite directions, and the sharpest case shows why: proving K4 works needs an anti-target with *no* defence, and shipping that as an example teaches exactly what the check exists to catch.
+
+Both must be **shaped exactly like a real OKR repo**, marker file and all, or they quietly encode assumptions no real repo satisfies.
 
 ## Invariants
 
@@ -74,7 +81,7 @@ A key result can support multiple parent objectives. OKRs are created both casca
 Edges are declared on the **needy side**: a child declares what it `supports`, a dependent declares what it `depends_on`, and nothing is ever declared on the parent or provider. Cycles in `supports` are errors; cycles in `depends_on` are warnings that still exit zero, so the validator needs severity levels. See ADR-0006 and ADR-0007.
 
 **Errors carry stable codes.**
-[`docs/ERROR_CODES.md`](docs/ERROR_CODES.md) is the registry — 37 codes across six bands, one of them reserved and never raised. It is a **published contract**: a code's meaning never changes, retired codes stay reserved, and new checks get new codes rather than widening an existing one. Severity is part of the contract too — `E` fails and exits non-zero, `W` reports and exits zero.
+[`docs/ERROR_CODES.md`](docs/ERROR_CODES.md) is the registry — 38 codes across six bands, one of them reserved and never raised. It is a **published contract**: a code's meaning never changes, retired codes stay reserved, and new checks get new codes rather than widening an existing one. Severity is part of the contract too — `E` fails and exits non-zero, `W` reports and exits zero.
 
 Never invent a code inline; add it to the registry first. Never let a validation failure surface as a raw traceback. Never write a test that asserts on message text — assert on the code.
 

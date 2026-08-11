@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from agentic_okr.core import Commitment, load
+from agentic_okr.core import Code, Commitment, load, validate
 from agentic_okr.core.score import Dimension, NodeScore, Scorecard, Tally, score
 from tests.test_loader import SUPPORT, write_repo
 
@@ -208,6 +208,172 @@ def test_either_kind_of_defence_satisfies_the_fourth_check(defence: str, tmp_pat
     )
 
     assert Dimension.ANTI_TARGETS_DEFENDED not in scored.missing
+
+
+# --- The one objective check, and its two ways of failing --------------------------------
+
+#: An objective nothing is written inside, which other goals ladder up to. `okr validate`
+#: reports this as `W106`; here it is one of the two ways the objective check fails.
+EMPTY_OBJECTIVE = """
+objectives:
+  - id: company.ambition
+    statement: The thing everything ladders up to
+    owner: lead
+    commitment: committed
+  - id: team.objective
+    statement: A thing the team wants
+    owner: lead
+    commitment: committed
+    supports: [company.ambition]
+    key_results:
+      - id: team.key-result
+        statement: A number the team will move
+        type: {type}
+        owner: lead
+{measure}
+"""
+
+
+def objectives(tmp_path: Path, key_result_type: str, measure: str) -> Scorecard:
+    """A repo with an empty objective above one that carries a key result of `type`."""
+    for relative, content in {
+        "okr.yaml": MARKER,
+        "owners.yaml": OWNERS,
+        "metrics.yaml": METRICS,
+        "okrs/team.yaml": EMPTY_OBJECTIVE.format(type=key_result_type, measure=measure),
+    }.items():
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    return score(load(tmp_path))
+
+
+def scored_objective(card: Scorecard, objective_id: str) -> NodeScore:
+    return next(o.objective for o in card.objectives if o.objective.node.id == objective_id)
+
+
+def test_an_empty_objective_and_a_build_trapped_one_both_score_zero_of_one(
+    tmp_path: Path,
+) -> None:
+    """The arithmetic is right for both, which is why only the wording needed fixing."""
+    card = objectives(tmp_path, "milestone", "        success_criteria: [Shipped]")
+
+    assert scored_objective(card, "company.ambition").tally == Tally(0, 1)
+    assert scored_objective(card, "team.objective").tally == Tally(0, 1)
+
+
+def test_an_empty_objective_is_not_described_as_a_build_trap(tmp_path: Path) -> None:
+    """Two different things to go and do, so two different sentences.
+
+    A build trap measures effort instead of impact; an empty objective measures nothing.
+    Telling somebody looking at the second to add 'a key result that moves a number'
+    describes the first.
+    """
+    card = objectives(tmp_path, "milestone", "        success_criteria: [Shipped]")
+
+    assert scored_objective(card, "company.ambition").gaps == (
+        "key results — this objective has none",
+    )
+    assert scored_objective(card, "team.objective").gaps == ("a key result that moves a number",)
+
+
+def test_both_ways_of_failing_are_the_same_check(tmp_path: Path) -> None:
+    """One dimension, two wordings. The rubric stays five checks, not six."""
+    card = objectives(tmp_path, "milestone", "        success_criteria: [Shipped]")
+
+    for objective_id in ("company.ambition", "team.objective"):
+        assert scored_objective(card, objective_id).missing == (Dimension.NOT_BUILD_TRAPPED,)
+
+
+def test_an_objective_with_a_metric_key_result_passes_however_it_is_worded(
+    tmp_path: Path,
+) -> None:
+    card = objectives(tmp_path, "metric", "        metric: reopen_rate_7d\n        target: 0.05")
+
+    assert scored_objective(card, "team.objective").gaps == ()
+
+
+@pytest.mark.parametrize(
+    ("key_results", "warned", "dimension_fails"),
+    [
+        ("", True, True),
+        ("milestone", False, True),
+        ("metric", False, False),
+    ],
+    ids=["none", "only-milestones", "a-metric"],
+)
+def test_the_three_states_of_an_objective_form_a_progression(
+    key_results: str, warned: bool, dimension_fails: bool, tmp_path: Path
+) -> None:
+    """ADR-0011 Amendment 1 states this progression. It is checkable, so it is checked.
+
+    No key results raises the warning and fails the dimension. Adding a milestone clears
+    the warning and leaves the dimension failing, now as a build trap. Adding a metric key
+    result clears both. The warning and the dimension overlap in one of the three states
+    and diverge in the next, which is what makes them worth having separately.
+    """
+    measures = {
+        "milestone": "        success_criteria: [Shipped]",
+        "metric": "        metric: reopen_rate_7d\n        target: 0.05",
+    }
+    goals = LADDERED_OBJECTIVE.format(
+        key_results=(
+            ""
+            if not key_results
+            else "    key_results:\n"
+            "      - id: company.key-result\n"
+            "        statement: Something under it\n"
+            f"        type: {key_results}\n"
+            "        owner: lead\n" + measures[key_results] + "\n"
+        )
+    )
+    root = write_score_repo(tmp_path, goals)
+    graph = load(root)
+
+    report = validate(graph)
+    scored = scored_objective(score(graph), "company.ambition")
+
+    assert (Code.OBJECTIVE_WITHOUT_KEY_RESULTS in {v.code for v in report.warnings}) is warned
+    assert bool(scored.missing) is dimension_fails
+    assert report.ok
+
+
+#: An objective with a team laddering up to it, so it is never an orphan whatever is or is
+#: not written inside it. `{key_results}` is what it carries.
+LADDERED_OBJECTIVE = """
+objectives:
+  - id: company.ambition
+    statement: The thing everything ladders up to
+    owner: lead
+    commitment: committed
+{key_results}
+  - id: team.objective
+    statement: A thing the team wants
+    owner: lead
+    commitment: committed
+    supports: [company.ambition]
+    key_results:
+      - id: team.key-result
+        statement: A number the team will move
+        type: metric
+        owner: lead
+        metric: reopen_rate_7d
+        target: 0.05
+"""
+
+
+def write_score_repo(tmp_path: Path, goals: str) -> Path:
+    """A minimal repo carrying `goals`, for a test that needs both a report and a score."""
+    for relative, content in {
+        "okr.yaml": MARKER,
+        "owners.yaml": OWNERS,
+        "metrics.yaml": METRICS,
+        "okrs/team.yaml": goals,
+    }.items():
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    return tmp_path
 
 
 # --- Commitment orders the report and touches no number ----------------------------------
