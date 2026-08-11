@@ -104,6 +104,8 @@ An edge carries no weight, percentage or contribution share. They invite false p
 
 An edge accepts either a bare ID or a mapping. `supports: [company.retention]` and `supports: [{target: company.retention, origin: laddered}]` are both valid; the loader normalises to the mapping form.
 
+**`origin` applies to `supports` only.** *(Clarified 2026-08-07, during implementation.)* Read literally, "an edge accepts a mapping" and "`origin` is optional on the edge" together imply a dependency can be `cascaded` or `laddered`. It cannot: provenance here means how a *goal hierarchy* connection came about, and a delivery dependency has no top-down or bottom-up version. `depends_on` carries a target and nothing else, while keeping the shorthand normalisation uniform.
+
 ## Consequences
 
 **Adding a team's OKR never requires editing leadership's file.** Under the opposite convention, every team laddering to a company objective would raise a PR against the same file, making the organisation's most important document its most contended one. Directionality here is a concurrency decision as much as a modelling one.

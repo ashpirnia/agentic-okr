@@ -16,6 +16,11 @@ Three guarantees:
 
 **Every violation reports a location** — file path, and line where the parser can supply one. Tests assert on codes, never on message text (`CLAUDE.md`).
 
+**Which layer raises a code is an implementation detail; the code is the contract.** Some are enforced by the schema models, some by the validator, and the split is recorded in the build log rather than here. Two consequences worth knowing:
+
+- **`E003` and `E103` are the same underlying violation in different files.** A missing required field is detected by the parser before any of our code runs, so the file being read is what distinguishes them — `E003_MARKER_FIELD_MISSING` in `okr.yaml`, `E103_FIELD_MISSING` in a goal file. Only the caller knows which, so the loader completes the mapping. The same applies to `E102_UNKNOWN_FIELD`.
+- **A code may be raised later than you would expect.** The type-conditional rules `E401`–`E403` are computable from a single key result but are the validator's, not the model's: a model raises fatally on the first failure, and a goal owner needs every problem in their file at once with locations.
+
 ---
 
 ## E0xx — Repo and marker

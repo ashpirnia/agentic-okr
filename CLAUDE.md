@@ -60,7 +60,7 @@ A field earns its place only if the Champion can elicit it from a human *today*.
 Declared once per OKR repo, in `okr.yaml`. The loader validates it against a supported set and fails clearly on mismatch. Never make it default or infer it.
 
 **`core` never imports `champion`.**
-`core/` is the schema, loader, graph and validator — a library with no LLM dependency, installable and runnable without an API key. `champion/` is the agent workflow and depends on `core`. The dependency runs one way only. The Conductor's lint will later sit on `core` too, which is the reason for the split. Agent dependencies live in the optional `agent` extra; a test asserts `core` imports cleanly without it, so never add a convenience import that breaks the minimal install.
+`core/` is the schema, loader, graph and validator — a library with no LLM dependency, installable and runnable without an API key. `champion/` is the agent workflow and depends on `core`. The dependency runs one way only. The Conductor's lint will later sit on `core` too, which is the reason for the split. Agent dependencies live in the optional `agent` extra. Never add a convenience import that breaks the minimal install. *(The test guarding this does not exist yet — plan task 1.6a. Until it does, this is a rule with nothing enforcing it.)*
 
 **No API client in this codebase.**
 The datastore is git, not a git host. Every core command — `init`, `validate`, `score`, `graph`, `diff` — must work against a bare repo with no remote. Host-specific behaviour is confined to two places: output *formats* selected by `--platform`, and editable example workflows under `.github/`. Never add an HTTP call to a hosting platform, never import a platform SDK, and never make a core command depend on a remote existing. The README's portability claim is only true while this holds.
@@ -149,6 +149,7 @@ Every one of these must work against a bare repo with no remote.
 ## Working agreements
 
 - **Follow the ADR.** `docs/adr/` is the source of truth; this file is a summary of it. If an ADR covers the decision, implement it as written. If it doesn't, or if implementing it reveals the ADR is wrong, stop and say so — do not decide silently in code.
+- **If you made a call an ADR didn't settle, log it in the same commit.** [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md) holds implementation decisions below the ADR threshold — where a boundary between modules falls, why a field is normalised, a library constraint that changed a shape. Not afterwards, and not a changelog. The test: would a future implementer otherwise rediscover this, or "fix" it without knowing it was deliberate?
 - **This file drifts. Update it in the same commit.** When an ADR lands or is amended, check whether it changed anything stated here — an invariant, the layout, a marker field, a command. Summaries rot silently while every individual ADR stays correct, and a stale invariant is worse than a missing one because it will be believed.
 - **The completeness score measures whether a spec is filled in, not whether the OKR is good.** Do not let that distinction blur in code, output text or docs.
 - **Write for the goal owner, not the developer.** Validation errors, CLI help and schema docs are read by a support lead in a PR review, not by us. No Python identifiers, no stack traces, no "see `core/loader.py`".
