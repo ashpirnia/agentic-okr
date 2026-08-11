@@ -4,8 +4,9 @@ A library with no LLM dependency: installable and runnable without an API key. T
 Champion depends on this; this never depends on the Champion, because the Conductor's
 wiring lint will later sit on the same loader.
 
-The way in is `load`, which returns a `Graph`. Everything downstream — validation, the
-completeness score, `okr diff`, the CLI — reads the graph rather than the files.
+The way in is `load`, which returns a `Graph`, and then `validate`, which reports
+everything wrong with it. Everything downstream — the completeness score, `okr diff`, the
+CLI — reads the graph rather than the files.
 """
 
 from .codes import Code, Severity
@@ -30,6 +31,7 @@ from .models import (
     RepoMarker,
     SupportsEdge,
 )
+from .validate import Report, validate
 from .violations import LoadError, Violation, sort_violations
 
 __all__ = [
@@ -57,6 +59,7 @@ __all__ = [
     "OwnersFile",
     "RefKind",
     "Reference",
+    "Report",
     "RepoMarker",
     "Severity",
     "Source",
@@ -65,4 +68,5 @@ __all__ = [
     "find_root",
     "load",
     "sort_violations",
+    "validate",
 ]

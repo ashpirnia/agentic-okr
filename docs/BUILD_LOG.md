@@ -180,3 +180,64 @@ one from `core` breaks the install just as surely.
 Also removed here: the CI step that tolerated pytest's exit code 5. It existed because no
 tests were collected during bootstrap. Tests exist now, so it had stopped protecting
 anything and started hiding a total collection failure.
+
+---
+
+## The validator — `core/validate.py`
+
+ADR-0006 decides the edge rules and ADR-0011 the three type-conditional ones, so the
+checks themselves were transcription. What was not settled:
+
+**`validate` returns a report; it never raises.** The loader raises, because a repo that
+cannot be *built* has no object to hand back. An invalid repo does — invalidity is the
+ordinary outcome a goal owner is expected to read and act on, and making it an exception
+would force every consumer, including the future Conductor lint, to use `try` for the
+normal path. `Report` keeps errors and warnings apart rather than handing back one list
+with a severity to filter on, because the one question every caller asks is whether to
+exit non-zero.
+
+**Grouping is by the reference's target, uniformly across all four classes.** The build
+log's earlier note — one cause producing N identical failures is reported as the cause —
+needed a concrete rule. The rule is: the thing that does not exist is the fix, and the
+places expecting it are symptoms. One renamed owner ID is one violation listing twelve
+locations; three key results with three differently mistyped metrics are three violations,
+because they are three fixes. Every location is listed in the message rather than counted,
+since the reader has to visit each one and "in 12 places" sends them searching for the
+other eleven.
+
+`E206_WATCHED_BY_NOT_GUARDED` is the exception that proves the rule: it is grouped by key
+result *and* metric together, because the fix is one guardrail on one key result, which
+settles every anti-target there that named it.
+
+**A dangling target suppresses the shape and cycle checks on that edge.** Otherwise a
+misspelled ID reports twice — once as a goal that does not exist, once as a connection to
+the wrong kind of thing — and the second is an artefact of the first.
+
+**Cycles are reported per strongly connected component, not per edge or per elementary
+cycle.** Every edge in a circle has the same single fix, and a component with several
+overlapping circles would otherwise produce a combinatorial pile of violations saying one
+thing. The message prints the shortest circle through the component's lowest ID, which is
+readable and still names connections whose removal breaks it. Tarjan is written
+iteratively: nothing stops a goal chain being deeper than the interpreter's stack, and a
+crash there would report a bug of ours as a problem with somebody's goals.
+
+Implicit containment edges are included in the traversal, which is what makes an objective
+that supports one of its own key results a cycle — as it should be, since nesting is
+itself a supporting edge. Self-loops are excluded, because `E302_SELF_REFERENCE` already
+reports them at the line somebody wrote.
+
+**`W102_ORPHAN_OBJECTIVE` counts containment as a connection.** The registry says an
+orphan is an objective that neither supports nor is supported by anything "and is not a
+top-level objective", which needs a rule for telling those two apart. Containment is that
+rule: an objective with key results beneath it has incoming supporting edges and is never
+an orphan, so what the warning catches is an objective with no parent and nothing under it
+— an unfinished ladder.
+
+**`E306_SUPPORTS_TARGET_INVALID` is not raised, and `E301_ILLEGAL_EDGE_SHAPE` covers its
+case.** The two registry rows describe one situation. `E306` is "a key result's `supports`
+targets something other than an objective", and with two node kinds in the schema the only
+such target is another key result — which is exactly what `E301`'s row names as its
+commonest case. `E301` was chosen because the registry row spells the case out. `E306`
+stays reserved and unraised; it is not retired, because the pair is worth resolving
+deliberately rather than by deleting a published code. Flagged rather than decided
+silently, per the working agreements.

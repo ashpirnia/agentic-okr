@@ -12,6 +12,8 @@ Three guarantees:
 2. **Retired codes stay reserved.** A number is never reused for a different check.
 3. **New checks get new codes**, never a widened existing one.
 
+A reserved code is struck through and marked *never raised*, with the reason. `E306` is the only one so far — redundant with `E301` from the start, and found unreachable during implementation. Giving it an invented meaning to justify the number would have been worse than the redundancy, and renumbering would break the one property that makes codes worth having.
+
 **Severity is part of the contract.** `E` codes fail the run and exit non-zero. `W` codes are reported and exit zero — they mark things that are legal but usually wrong, and a validator that rejected them would teach people to write false specs to satisfy it.
 
 **Every violation reports a location** — file path, and line where the parser can supply one. Tests assert on codes, never on message text (`CLAUDE.md`).
@@ -77,7 +79,7 @@ See [ADR-0006](adr/0006-edge-semantics.md).
 | `E303_SUPPORTS_CYCLE` | A cycle in `supports`. A goal contributing to itself, directly or transitively, cannot have its contribution resolved. |
 | `E304_REDUNDANT_CONTAINMENT_EDGE` | A key result explicitly lists its containing objective in `supports`. Nesting already materialises that edge, and two representations of one relationship is how they come to disagree. |
 | `E305_DEPENDS_ON_NOT_KEY_RESULT` | A `depends_on` target is not a key result. |
-| `E306_SUPPORTS_TARGET_INVALID` | A key result's `supports` targets something other than an objective. |
+| ~~`E306_SUPPORTS_TARGET_INVALID`~~ | **Reserved — never raised.** With two node kinds, "a key result's `supports` targets something other than an objective" can only mean another key result, which is `E301`. Redundant from the moment it was written, and found unreachable during implementation. The number is burnt rather than reused. |
 
 ## E4xx — Content rules
 
