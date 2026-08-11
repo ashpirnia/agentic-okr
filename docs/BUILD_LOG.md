@@ -432,3 +432,22 @@ The number is the article's evidence and the walkthrough is where a reader meets
 rubric change that skips the page is drift worth failing a test over. Only the roll-up is
 pinned, not the whole rendering — pinning the prose would make every wording improvement a
 test failure for no gain.
+
+**The scaffold now says what its example leaves out.** The earlier entry recorded the
+decision to keep success criteria, guardrails and anti-targets out of the goal example and
+flagged that it looks like an omission. Leaving it at that was half the job: the reasoning
+lived here, where no adopter reads it, and the file itself was silent. Silence models a
+shape as effectively as a filled-in field does — a first goal file with no anti-target in
+it teaches that a goal is a statement, an owner, a metric and a target.
+
+So the file says it outright: this is a goal as most people first write it, it carries none
+of the half of the schema that makes intent explicit, and `okr score` will name the gap.
+Prose only — no extra YAML, since pre-filling those three would be doing badly, from a
+template, the one thing that has to come out of a conversation. It points at
+`docs/GRAPH-BY-EXAMPLE.md` for a filled-in set rather than growing a second worked example
+inside the scaffold.
+
+The prose makes a checkable promise, so it is checked: uncommenting the example and scoring
+it must report exactly `success criteria, guardrails, anti-targets` and `2 of 5`. If the
+rubric or the example changes and the other does not, that test fails rather than a reader
+finding out.

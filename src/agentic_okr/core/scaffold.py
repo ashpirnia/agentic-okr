@@ -215,6 +215,12 @@ METRICS = """\
 #: The first goal file. One objective, one key result, and only the fields that are
 #: required — a scaffold showing everything the schema allows teaches that writing a goal
 #: here means filling in twenty fields, and it does not.
+#:
+#: What it leaves out is the entire *making intent explicit* half of the schema, which is
+#: the half the tool exists for. That stays out — pre-filling anti-targets would be doing
+#: badly, from a template, the one thing that has to come out of a conversation — but the
+#: omission is said out loud rather than left as silence, because an unexplained gap
+#: models the wrong shape just as effectively as a filled-in one models the wrong size.
 GOALS = """\
 # One team's goals for this cycle, reviewed together as a set.
 #
@@ -226,6 +232,20 @@ GOALS = """\
 # The IDs are yours to choose, and other files refer to them, so they are namespaced by
 # team rather than by the objective above them: a key result can contribute to more
 # than one objective, and it should not have to be renamed when it does.
+#
+# What the example below leaves out matters as much as what it carries. It has no
+# success criteria, no guardrails and no anti-targets — the whole half of the schema
+# that makes intent explicit, and the half this tool exists for.
+#
+# That is on purpose. It is a goal as most people first write it: a statement, an
+# owner, a metric and a target. So the gap is one you can see for yourself rather
+# than one you have to take on trust. Those three are also not fields to copy
+# from a template — they come out of a conversation about what could go wrong on the
+# way to the number, and nothing here pretends to have had that conversation for you.
+#
+# Uncomment the example, run 'okr score', and it will name what is missing. Closing
+# that gap is the work. For a set of goals with all of it written down, see
+# docs/GRAPH-BY-EXAMPLE.md in the agentic-okr project.
 
 # objectives:
 #   - id: support.fast-resolution

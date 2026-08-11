@@ -11,6 +11,11 @@ that drift a test failure instead of somebody's discovery.
 exactly one example, as its last block. Uncommenting all of them has to produce a repo that
 loads and validates with nothing to report — otherwise the scaffold is teaching a shape the
 validator rejects, which is a worse first experience than no example at all.
+
+**And what the example leaves out is what the file says it leaves out.** The goal file
+carries no success criteria, no guardrails and no anti-targets, tells the reader so in
+prose, and tells them `okr score` will name the gap. That is a promise made to somebody in
+their first five minutes, so it is checked rather than trusted.
 """
 
 from pathlib import Path
@@ -20,6 +25,7 @@ import yaml
 
 from agentic_okr.core import CURRENT_SCHEMA_VERSION, ScaffoldRefused, create, load, validate
 from agentic_okr.core.scaffold import files, slug
+from agentic_okr.core.score import Dimension, Tally, score
 
 SHIPPED = Path(__file__).parent.parent / "examples" / "scaffold"
 
@@ -95,11 +101,19 @@ def test_every_commented_out_file_carries_an_example() -> None:
     assert len(fully_commented(SHIPPED_PERIOD)) == 3
 
 
+def uncommented(tmp_path: Path) -> Path:
+    """A scaffolded repo with every commented example uncommented, as a reader would."""
+    root = create(tmp_path, SHIPPED_PERIOD).root
+    for relative, content in fully_commented(SHIPPED_PERIOD).items():
+        (root / relative).write_text(commented_example(content) + "\n", encoding="utf-8")
+    return root
+
+
 @pytest.mark.parametrize("relative", sorted(fully_commented(SHIPPED_PERIOD)), ids=str)
 def test_an_uncommented_example_is_valid_yaml(relative: Path) -> None:
-    uncommented = commented_example(fully_commented(SHIPPED_PERIOD)[relative])
+    example = commented_example(fully_commented(SHIPPED_PERIOD)[relative])
 
-    assert isinstance(yaml.safe_load(uncommented), dict)
+    assert isinstance(yaml.safe_load(example), dict)
 
 
 def test_uncommenting_every_example_produces_a_repo_that_validates(tmp_path: Path) -> None:
@@ -108,15 +122,37 @@ def test_uncommenting_every_example_produces_a_repo_that_validates(tmp_path: Pat
     They uncomment what we wrote, save, and run `okr validate`. If that reports anything,
     the first thing the tool ever taught them was wrong.
     """
-    root = create(tmp_path, SHIPPED_PERIOD).root
-    for relative, content in fully_commented(SHIPPED_PERIOD).items():
-        (root / relative).write_text(commented_example(content) + "\n", encoding="utf-8")
-
-    graph = load(root)
+    graph = load(uncommented(tmp_path))
 
     assert validate(graph).violations == ()
     assert len(graph.objectives) == 1
     assert len(graph.key_results) == 1
+
+
+def test_the_example_goal_is_missing_exactly_what_the_file_says_it_is(tmp_path: Path) -> None:
+    """The scaffold tells a reader to uncomment it and run `okr score`. This is that.
+
+    The example is a goal as most people first write it — a statement, an owner, a metric
+    and a target — and it carries none of the half of the schema that makes intent
+    explicit. That gap is the thing being taught, so the file says so in prose and this
+    checks the prose is true: `okr score` names those three and no others.
+    """
+    card = score(load(uncommented(tmp_path)))
+    key_result = card.objectives[0].key_results[0]
+
+    assert key_result.missing == (
+        Dimension.SUCCESS_CRITERIA,
+        Dimension.GUARDRAILS,
+        Dimension.ANTI_TARGETS,
+    )
+    assert card.tally == Tally(2, 5)
+
+
+def test_the_example_goal_is_not_build_trapped(tmp_path: Path) -> None:
+    """The one thing the example does get right, so the gap it teaches is a clean one."""
+    card = score(load(uncommented(tmp_path)))
+
+    assert card.objectives[0].objective.missing == ()
 
 
 # --- The period reaches a file and a filename --------------------------------------------
