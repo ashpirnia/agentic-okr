@@ -47,6 +47,12 @@ anti_targets:
 
 **There is no source-system field**, not even as a free-text hint. Where a value comes from is measurement configuration, which ADR-0001 Amendment 1 assigned to the Conductor.
 
+**`unit` is a non-empty free string**, not an enum. Organisations measure in ratios, hours, currencies, rating scales, story points and things nobody has thought of; an enum would be permanently incomplete and would push authors into picking the nearest wrong value.
+
+It earns its place on legibility rather than on machine use — nothing in v1 reads it. `must_not_exceed: 0.08` on `reopen_rate_7d` is ambiguous until `unit: ratio` tells the reader it means 8%, and that reader is a support lead approving a pull request. A field that exists so a non-developer can interpret a threshold correctly is doing the job this project is for.
+
+**`target` is numeric**, and applies only to `type: metric` key results.
+
 ### Guardrails carry the comparison explicitly
 
 `must_not_exceed` and `must_not_fall_below`, on the guardrail, rather than a bare `threshold` interpreted against a direction stored on the metric.

@@ -38,6 +38,10 @@ Four fields plus two optional path overrides, and **nothing else**. Organisation
 
 **`schema_version` is matched exactly** against the set of supported versions. v1 supports exactly `1`. Anything else fails with a message naming what was found and what is supported. No coercion, no defaulting, no inference.
 
+**`period` is a non-empty free string.** Not a validated pattern.
+
+`2026-Q3` is the recommended convention, alongside `2026-H1` and `2026-07`, and `okr init` scaffolds it — but organisations run halves, trimesters, thirteen-week cycles and fiscal years that start in April, and a pattern tight enough to be useful would exclude some of them. Nothing parses it: it labels the repo for a human reader, and comparing two periods is string inequality. Validation checks that it is present and non-empty, which is all a schema can honestly assert about a label.
+
 ## Consequences
 
 **The whole graph is loaded, always.** Every consumer — the validator, the completeness score, `okr diff`, the reviewer list, the future Conductor lint — operates on a complete graph by construction rather than by the caller having remembered to point at the right directory.
