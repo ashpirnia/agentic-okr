@@ -241,3 +241,66 @@ commonest case. `E301` was chosen because the registry row spells the case out. 
 stays reserved and unraised; it is not retired, because the pair is worth resolving
 deliberately rather than by deleting a published code. Flagged rather than decided
 silently, per the working agreements.
+
+---
+
+## The CLI — `cli/`, `cli/report.py`, `cli/topology.py`
+
+ADR-0003 names the commands and ADR-0008 decides where the root comes from, so the
+argument handling was transcription. What was not settled:
+
+**Two exit codes, not three.** The obvious third — one for "invalid", another for "could
+not be read" — was rejected. A CI job asks one question, and every non-zero code it does
+not recognise it treats as failure anyway; a second failure code is a distinction only
+somebody debugging the tool would use, and the person the output is for is not that.
+`0` is nothing-to-fix, warnings included, and `1` is everything else.
+
+**A failed load renders exactly like a failed validation.** Both are lists of violations
+with codes and locations, and at the moment of reading them the difference between an
+unparseable file and an undeclared metric is not one the reader acts on differently. Only
+the closing line differs, and it has to: after a load failure the silence about everything
+else is not a pass, so the summary says nothing else could be checked. Machine output
+carries the same distinction as `loaded`, which is how a consumer tells "nothing found"
+from "never looked" — the counts it never got to make are null rather than zero.
+
+**Rendering lives in `cli/`, and the report objects stay clean.** `core` builds
+violations; nothing in it knows about a terminal. The split is what lets the future
+Conductor lint consume the same objects, and it is also why `Violation.__str__` is not
+what the CLI prints — a one-line form is for a log, and the report is a table.
+
+**The console is fixed at 100 columns when nothing is asking.** Rich falls back to 80 for
+a pipe, which folds a file path across two lines in the one place a reader has to read it
+exactly. A terminal is still measured. The side effect is that piped output is
+deterministic, which is what makes the CLI tests possible without stripping widths.
+
+**`okr graph`'s tree is a projection, and the projection is the interesting part.** The
+goal topology is a graph, so a tree has to pick one parent per node. A key result
+supporting two objectives is therefore drawn under each and expanded only the first time,
+marked "shown above" after that. Two guards, not one: a repo-wide `drawn` set stops the
+duplicate expansion, and a per-branch `ancestors` set stops a `supports` cycle recurring
+forever. The cycle guard is load-bearing — a cycle is an error `okr validate` reports, and
+the command a person reaches for to *see* the cycle must not hang on it.
+
+Anything the walk never reaches is printed under its own heading rather than dropped: a
+goal missing from the picture is the kind of wrong answer that looks like a right one.
+That covers goals inside a cycle and goals whose only connection points at nothing.
+
+**The adjacency table lists only edges somebody wrote.** Containment edges are excluded —
+nobody wrote them, there is no line to point at, and the tree above already shows them.
+What is left is the cross-team network, which is exactly what no single file makes visible
+and what the tree flattens away.
+
+**`okr graph` does not validate, and shows what does not resolve.** A connection pointing
+at a goal nobody declares is printed and marked in place, and the command still exits
+zero. Making it fail would give two commands one job, and hiding the edge would draw a
+picture that quietly disagrees with what `okr validate` says about the same repo.
+
+**A key result's inherited commitment is printed, not the empty field.** The label shows
+`committed, inherited` rather than "inherited" or a blank, because the reader's question
+is whether the goal is a must-hit, not whether the field is filled in. Where it came from
+is still marked, since an inherited commitment changes when somebody edits a different
+goal.
+
+**The entry point moved to `agentic_okr.cli:main`, and the package root imports nothing.**
+Under the old `agentic_okr:main`, importing `agentic_okr.core` would execute the package
+root and pull a terminal renderer into every program that only wanted to read a graph.

@@ -93,6 +93,7 @@ This repo (the tool):
 ```
 src/agentic_okr/
   core/       schema, loader, graph, validation — no LLM dependency
+  cli/        the `okr` command (Typer + rich) — one consumer of core, renders only
   champion/   facilitation agent (LangGraph) — depends on core
 docs/adr/     architecture decision records; every schema field traces to one
 examples/     fixture OKR repos, each shaped like a real one
@@ -130,12 +131,16 @@ CLI (built in Phase 1, entry point `okr`). Run from anywhere inside an OKR repo 
 ```bash
 okr init        # scaffold a valid empty OKR repo
 okr validate    # load, resolve, validate the whole graph; non-zero exit on violation
+                #   --json  the same report for a machine
 okr score       # completeness score with per-dimension breakdown
-okr graph       # print the resolved graph
+okr graph       # print the resolved graph as a tree plus an adjacency view
+                #   --json  nodes and edges, flat
 okr diff        # graph-level diff between two revisions, rendered in prose
                 #   --reviewers  owners affected by cross-boundary edge changes
 okr codeowners  # derive a CODEOWNERS mapping; prints to stdout, never writes
 ```
+
+Exit codes are the contract with CI and only two are used: `0` when nothing failed — warnings are reported and exit zero — and `1` when there is something to fix, whether validation found it or the repo could not be read at all.
 
 Every one of these must work against a bare repo with no remote.
 
