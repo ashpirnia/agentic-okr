@@ -38,8 +38,9 @@ from agentic_okr.core import (
     validate,
 )
 from agentic_okr.core.scaffold import OKR_DIR
+from agentic_okr.core.score import score
 
-from . import report, topology
+from . import report, scorecard, topology
 
 #: How wide the report is when nothing is there to ask. A terminal is measured; a pipe,
 #: a log file or a pull request comment gets this. Wider than rich's own fallback of 80,
@@ -173,6 +174,25 @@ def validate_command(path: PathArgument = None, as_json: JsonOption = False) -> 
         report.render_summary(console, graph, result)
 
     raise typer.Exit(0 if result.ok else 1)
+
+
+@app.command("score")
+def score_command(path: PathArgument = None, as_json: JsonOption = False) -> None:
+    """Count how much of your OKR spec is written down, and name what is not.
+
+    Five checks, four on every key result and one on every objective, counted as `12 of
+    19` rather than graded. It measures whether a spec is filled in — not whether the
+    goals are good ones, which is not something a count can tell you.
+
+    Always exits zero. A low score is a measurement, not a failure.
+    """
+    graph = _load_or_exit(path, as_json=as_json)
+    card = score(graph)
+
+    if as_json:
+        print(report.as_json(scorecard.payload(graph, card)))
+    else:
+        scorecard.render(console, graph, card)
 
 
 @app.command("graph")

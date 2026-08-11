@@ -193,7 +193,7 @@ def test_a_violation_is_printed_with_the_line_it_is_on(dangling: Path) -> None:
     assert all(f"line {line}" in printed for line in lines if line is not None)
 
 
-@pytest.mark.parametrize("command", ["validate", "graph"])
+@pytest.mark.parametrize("command", ["validate", "graph", "score"])
 @pytest.mark.parametrize("fixture", ["repo", "dangling", "unreadable"])
 def test_nothing_python_shaped_reaches_the_page(
     command: str, fixture: str, request: pytest.FixtureRequest
@@ -245,6 +245,65 @@ def test_json_says_when_it_never_got_to_look(unreadable: Path) -> None:
 def test_json_is_the_only_thing_printed(repo: Path) -> None:
     """Nothing decorative may share the stream, or a caller cannot parse it."""
     assert run("validate", "--json", str(repo)).output.lstrip().startswith("{")
+
+
+# --- score -------------------------------------------------------------------------------
+
+
+def test_score_prints_the_count_and_never_a_grade(repo: Path) -> None:
+    """`12 of 19`, and nothing that reads as a mark out of ten."""
+    result = run("score", str(repo))
+
+    assert "12 of 19" in result.output
+    assert result.exit_code == 0
+
+
+def test_score_says_what_it_measures(repo: Path) -> None:
+    """The distinction the whole feature depends on, printed every run."""
+    assert "Not whether the goals are good ones" in run("score", str(repo)).output
+
+
+def test_score_names_the_specific_misses(repo: Path) -> None:
+    """A count of gaps would not tell anybody what to go and write."""
+    output = run("score", str(repo)).output
+
+    assert "missing: guardrails, anti-targets" in output
+
+
+def test_score_never_fails_the_run(dangling: Path) -> None:
+    """A score is a measurement, not a gate — even on a repo that fails validation."""
+    assert run("score", str(dangling)).exit_code == 0
+
+
+def test_score_on_a_repo_that_cannot_be_read_exits_non_zero(unreadable: Path) -> None:
+    result = run("score", str(unreadable))
+
+    assert "E101_YAML_UNPARSEABLE" in result.output
+    assert result.exit_code == 1
+
+
+def test_score_json_carries_every_check_so_the_total_can_be_recounted(repo: Path) -> None:
+    result = payload("score", "--json", str(repo))
+    checks = [
+        passed
+        for objective in result["objectives"]
+        for node in (objective, *objective["key_results"])
+        for passed in node["checks"].values()
+    ]
+
+    assert result["score"] == {"passed": 12, "total": 19, "percentage": 63}
+    assert sum(checks) == 12
+    assert len(checks) == 19
+
+
+def test_score_of_a_new_repo_says_there_is_nothing_to_score(tmp_path: Path) -> None:
+    """A scaffold scores 0 of 0. That is not the same as scoring badly."""
+    run("init", str(tmp_path), "--period", "2026-Q3")
+
+    result = run("score", str(tmp_path))
+
+    assert result.exit_code == 0
+    assert "nothing to score" in result.output
 
 
 # --- graph -------------------------------------------------------------------------------

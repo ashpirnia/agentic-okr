@@ -380,3 +380,55 @@ a line break, so help text wrapped at whatever column the source line happened t
 read as though it had been formatted badly. `rich_markup_mode="markdown"` reflows
 paragraphs. Noted because it looks like a styling preference and is not — the docstrings are
 help text a goal owner reads.
+
+---
+
+## The completeness score — `core/score.py`, `cli/scorecard.py`
+
+ADR-0011 settles the rubric, the presentation as `n of m`, and that commitment level lives
+in severity rather than arithmetic. Those were transcription. What was not settled:
+
+**An objective's key results, for both the check and the grouping, means the ones written
+inside it — not everything that supports it.** The graph reading is arguably truer: a key
+result may support several objectives, and one laddering up from another team really does
+point a number at that objective. It was rejected for one reason, which outranks the other
+here: every key result is written inside exactly one objective, so containment partitions
+the repo and the subtotals add up to the roll-up exactly. A reader can recount the total
+from the files. Under the graph reading, a key result supporting two objectives counts in
+two subtotals, the subtotals exceed the total, and the number stops being checkable by
+hand — which is the property the score exists for. Both readings give 12 of 19 on the
+worked example, so the example does not discriminate between them; this is a decision, not
+a measurement.
+
+**Severity is `(commitment, gaps descending, file order)`.** ADR-0011 says findings are
+ordered by severity and that commitment is where severity lives, which leaves ties. Ranking
+the four dimensions against each other would be weighting by the back door, so it is not
+done: within one commitment level, the goal missing more comes first, and file order breaks
+the rest so the report is reproducible. Counting gaps is not weighting them — no dimension
+outranks another anywhere in the code.
+
+**Commitment is effective, not declared.** A key result with none of its own takes its
+objective's. Reading the field as written would sort an inheriting key result under a
+committed objective below an explicitly aspirational one, which is exactly backwards.
+
+**`okr score` always exits zero.** `okr validate` gates a pull request; a score is a
+measurement and gating on one would make people write specs to pass a threshold. The only
+non-zero exit is a repo that could not be read.
+
+**Two sections, not one.** *What is missing* is severity-ordered and is what somebody acts
+on; *where the number comes from* is file-ordered with subtotals and is what somebody
+recounts. The overlap between them is deliberate — they answer different questions, and
+merging them would mean choosing which of the two jobs to do badly.
+
+**No bar, no colour scale, no grade.** ADR-0011 warns that a chart is the most likely place
+the "is this OKR good?" misreading creeps in, and a progress bar is a chart. The one-line
+statement of what the number means is printed on every run rather than kept in the docs,
+because the docs are not what somebody is looking at when they misread it.
+
+**`docs/GRAPH-BY-EXAMPLE.md` had a hand-written `okr score` block, and the per-node numbers
+in it were already right.** The layout was not, so it has been replaced with real output,
+and `tests/test_score.py` now asserts the roll-up the code produces appears in that page.
+The number is the article's evidence and the walkthrough is where a reader meets it, so a
+rubric change that skips the page is drift worth failing a test over. Only the roll-up is
+pinned, not the whole rendering — pinning the prose would make every wording improvement a
+test failure for no gain.

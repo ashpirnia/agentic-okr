@@ -135,7 +135,9 @@ okr init        # scaffold a valid empty OKR repo; prompts for --period
                 #   never overwrites, and refuses inside an existing OKR repo
 okr validate    # load, resolve, validate the whole graph; non-zero exit on violation
                 #   --json  the same report for a machine
-okr score       # completeness score with per-dimension breakdown
+okr score       # completeness score: `n of m`, per KR, per objective, repo roll-up
+                #   --json  every check by its rubric label, so the total can be recounted
+                #   always exits zero — a low score is a measurement, not a failure
 okr graph       # print the resolved graph as a tree plus an adjacency view
                 #   --json  nodes and edges, flat
 okr diff        # graph-level diff between two revisions, rendered in prose
@@ -159,5 +161,5 @@ Every one of these must work against a bare repo with no remote.
 - **Follow the ADR.** `docs/adr/` is the source of truth; this file is a summary of it. If an ADR covers the decision, implement it as written. If it doesn't, or if implementing it reveals the ADR is wrong, stop and say so — do not decide silently in code.
 - **If you made a call an ADR didn't settle, log it in the same commit.** [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md) holds implementation decisions below the ADR threshold — where a boundary between modules falls, why a field is normalised, a library constraint that changed a shape. Not afterwards, and not a changelog. The test: would a future implementer otherwise rediscover this, or "fix" it without knowing it was deliberate?
 - **This file drifts. Update it in the same commit.** When an ADR lands or is amended, check whether it changed anything stated here — an invariant, the layout, a marker field, a command. Summaries rot silently while every individual ADR stays correct, and a stale invariant is worse than a missing one because it will be believed.
-- **The completeness score measures whether a spec is filled in, not whether the OKR is good.** Do not let that distinction blur in code, output text or docs.
+- **The completeness score measures whether a spec is filled in, not whether the OKR is good.** Do not let that distinction blur in code, output text or docs. It is `n of m` and never a grade: no weights, no 0–10, no bar. Commitment level appears in exactly one place — the order findings are reported in — and changes no number. The worked example scores 12 of 19, asserted in `tests/test_score.py` against both ADR-0011 and `docs/GRAPH-BY-EXAMPLE.md`.
 - **Write for the goal owner, not the developer.** Validation errors, CLI help and schema docs are read by a support lead in a PR review, not by us. No Python identifiers, no stack traces, no "see `core/loader.py`".

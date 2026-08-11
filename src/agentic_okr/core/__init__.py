@@ -33,6 +33,7 @@ from .models import (
     SupportsEdge,
 )
 from .scaffold import Scaffold, ScaffoldRefused, create
+from .score import Check, Dimension, NodeScore, ObjectiveScore, Scorecard, Tally, score
 from .validate import Report, validate
 from .violations import LoadError, Violation, sort_violations
 
@@ -41,9 +42,11 @@ __all__ = [
     "SUPPORTED_SCHEMA_VERSIONS",
     "AntiTarget",
     "AntiTargetOrigin",
+    "Check",
     "Code",
     "Commitment",
     "DependencyEdge",
+    "Dimension",
     "Edge",
     "EdgeKind",
     "EdgeOrigin",
@@ -57,7 +60,9 @@ __all__ = [
     "MetricsFile",
     "Node",
     "NodeKind",
+    "NodeScore",
     "Objective",
+    "ObjectiveScore",
     "Owner",
     "OwnersFile",
     "RefKind",
@@ -66,13 +71,16 @@ __all__ = [
     "RepoMarker",
     "Scaffold",
     "ScaffoldRefused",
+    "Scorecard",
     "Severity",
     "Source",
     "SupportsEdge",
+    "Tally",
     "Violation",
     "create",
     "find_root",
     "load",
+    "score",
     "sort_violations",
     "validate",
 ]

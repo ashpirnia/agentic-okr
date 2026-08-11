@@ -330,24 +330,30 @@ It prints to stdout rather than writing the file, because your `CODEOWNERS` prob
 `okr score` counts structural checks — four per key result, one per objective. Every check is computable from the graph, so the number is reproducible by hand ([ADR-0011](adr/0011-completeness-rubric.md)).
 
 ```
-okr score
+$ okr score
 
-company.retention                    1 of 1
-  company.net-retention              2 of 4  (50%)  [committed]
-      missing: guardrails, anti-targets
+acme-okrs  period 2026-Q3
 
-support.fast-resolution              1 of 1
-  support.resolution-time            4 of 4 (100%)  [committed]
-  support.self-serve                 2 of 4  (50%)  [aspirational]
-      missing: guardrails, anti-targets
+12 of 19 (63%)
+How much of your spec is written down. Not whether the goals are good ones.
 
-platform.reliability                 0 of 1
-      build trap: every key result is a milestone
-  platform.api-v2                    2 of 4  (50%)  [committed]
-      missing: guardrails, anti-targets
+What is missing
+  • company.net-retention  2 of 4  committed     missing: guardrails, anti-targets
+  • platform.api-v2        2 of 4  committed     missing: guardrails, anti-targets
+  ◆ platform.reliability   0 of 1  committed     missing: a key result that moves a number
+  • support.self-serve     2 of 4  aspirational  missing: guardrails, anti-targets
 
-                                    12 of 19 (63%)
+Where the number comes from
+  ◆ company.retention          1 of 1  (100%)  3 of 5 with its key results
+    • company.net-retention    2 of 4   (50%)
+  ◆ platform.reliability       0 of 1    (0%)  2 of 5 with its key results
+    • platform.api-v2          2 of 4   (50%)
+  ◆ support.fast-resolution    1 of 1  (100%)  7 of 9 with its key results
+    • support.resolution-time  4 of 4  (100%)
+    • support.self-serve       2 of 4   (50%)
 ```
+
+The two sections do different jobs. **What is missing** is ordered by severity, which is the only place commitment level appears — a committed key result missing guardrails is reported above an aspirational one missing exactly the same thing, and scores identically to it. **Where the number comes from** is in file order, and the subtotals add up: 3 + 2 + 7 = 12, out of 5 + 5 + 9 = 19.
 
 **`support.resolution-time` scores 4 of 4** — it is the one objective in this example that has been through the Champion. The others are as a human would first write them, which is why the gap is visible.
 
