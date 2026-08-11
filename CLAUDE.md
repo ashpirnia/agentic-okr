@@ -6,7 +6,7 @@ Context for Claude Code working in this repo. These are the invariants — read 
 
 `agentic-okr` is a **tool**. It lets an organisation write its OKRs as machine-readable specs in git, precisely enough that agents can be pointed at them. Three roles sit on top of that spec: the **Champion** helps humans write it, the **Conductor** wires agents to it and lints the connection, the **Shepherd** watches for drift and feeds what it catches back as new spec.
 
-Only the Champion is being built. Conductor and Shepherd exist in this repo as an event contract, nothing more.
+Only the Champion is being built, and only its specification half. Conductor and Shepherd exist in this repo as an event contract, nothing more. See ADR-0003 for the full list of v1 cuts and why each was made — check it before proposing anything that sounds like scope.
 
 **The three own different things.** Champion: what you meant (git). Conductor: how it is hooked up — the agent registry, agent→key-result wiring, and where each KR's value is read from. Shepherd: what happened (its own store). Each has a different primary audience — goal owners, agent developers, and leaders respectively.
 
@@ -14,7 +14,7 @@ Only the Champion is being built. Conductor and Shepherd exist in this repo as a
 
 ## The two repos — read this first
 
-This is the distinction most likely to be got wrong, and it is wrong in a way that is hard to unpick later.
+This is the distinction most likely to be got wrong, and it is wrong in a way that is hard to unpick later. See ADR-0002.
 
 | | **This repo** (`agentic-okr`) | **An OKR repo** |
 | :--- | :--- | :--- |
@@ -32,17 +32,29 @@ A support lead raising a PR to add a guardrail must never have to look at our `s
 
 ## Invariants
 
-**Git holds intent. The database holds observation.**
-This governs the *OKR repo*. Objectives, key results, success criteria, guardrail metric *definitions*, anti-targets, restraint clauses, ownership and links go in YAML under version control. Current KR values, KPI readings, time series and drift alerts do not — they belong in a store the **Shepherd** owns, which does not exist yet and is not built in v1. If a proposed field would be written by a machine on a schedule, it is observation and it does not go in the schema. No exceptions for "just a small number": a single `current_value` field is how this erodes, and it will be requested. An OKR repo whose commit log is destroyed by progress numbers within a quarter has lost the only property that made this worth doing. See ADR-0001.
+**Three stores, three owners.** See ADR-0001.
+
+| Category | Example | Owner |
+| :--- | :--- | :--- |
+| **Intent** — what you meant | "reopen rate must not exceed 8%" | Champion, in git |
+| **Measurement config** — how to find out | "reopen rate comes from Zendesk API X" | Conductor |
+| **Observation** — what happened | "reopen rate was 8.1% on Tuesday" | Shepherd, its own store |
+
+Only intent goes in the OKR repo: objectives, key results, success criteria, guardrail metric *definitions*, anti-targets and the restraints nested inside them, and ownership.
+
+**The test:** if a field would be written by a machine on a schedule, it is observation and does not go in the schema. No exceptions for "just a small number" — a single `current_value` field is how this erodes, and it will be requested. If a field carries a connection detail or credential, it is measurement config and belongs to the Conductor. An OKR repo whose commit log is destroyed by progress numbers within a quarter has lost the only property that made this worth doing.
 
 **Never imply the user must provide a database.**
 The Shepherd owns its store — schema, migrations, retention — and will ship with bundled SQLite so the default requires no provisioning. An org may host it elsewhere; that is an option, not a prerequisite. It is derived data, not a system of record: the raw KPIs already live in the org's own tools. Nothing in the docs, CLI help or README should suggest otherwise, and v1 needs no persistence at all.
 
 **Never validate a partial graph.**
-An OKR repo root is marked by an `okr.yaml` declaring `schema_version` and `okr_dir`. The loader finds it by walking up from the given path (as git does), then loads the *whole* graph. Validating only the subdirectory a user happened to point at produces phantom dangling references, or worse, silently passes a fragment. Both are wrong answers that look like right ones, and the Conductor will later lint against this loader.
+An OKR repo root is marked by an `okr.yaml` declaring `schema_version`, `period` and `okr_dir`, plus optional `metrics_file` and `owners_file`. The loader finds it by walking up from the given path (as git does), then loads the *whole* graph. An explicit path may override the walk-up but must itself contain a marker — there is no supported way to load a subdirectory as though it were whole. Validating a fragment produces phantom dangling references, or worse, passes silently. Both are wrong answers that look like right ones, and both review routing and the future Conductor lint sit on this loader, so a partial graph produces a wrong *reviewer list* too. See ADR-0008.
+
+**Join keys are declared, never free text.**
+Metrics (`metrics.yaml`) and owners (`owners.yaml`) are declared once and referenced by ID; an unresolvable reference is an error in the same class as a dangling edge. Both are join keys — a metric's identity joins git to the Conductor's sources and the Shepherd's readings, an owner's identity drives review routing. Unvalidated strings drift silently: `csat` and `CSAT` become two metrics, `head_of_support` and `head-of-support` become two people and a cross-team review routes to neither. Never accept a bare string where a declared reference belongs. See ADR-0009 and ADR-0010.
 
 **The schema is thin on purpose.**
-A field earns its place only if the Champion can elicit it from a human *today*. Not because the Conductor or Shepherd might need it later. Adding a field is cheap; restructuring one we got wrong means migrating every file in every repo using it. When in doubt, leave it out and note it in the build log. Every field must trace to an ADR in `docs/adr/` — if you find yourself adding one that doesn't, stop and raise it.
+A field earns its place only if the Champion can elicit it from a human *today*. Not because the Conductor or Shepherd might need it later. Adding a field is cheap; restructuring one we got wrong means migrating every file in every repo using it. When in doubt, leave it out. Every field must trace to an ADR in `docs/adr/` — if you find yourself adding one that doesn't, stop and raise it. See ADR-0005 for the node set and the test that produced it: a concept is a first-class node only if something outside its parent references it by ID.
 
 **`schema_version` is non-optional, from the first commit.**
 Declared once per OKR repo, in `okr.yaml`. The loader validates it against a supported set and fails clearly on mismatch. Never make it default or infer it.
@@ -50,11 +62,16 @@ Declared once per OKR repo, in `okr.yaml`. The loader validates it against a sup
 **`core` never imports `champion`.**
 `core/` is the schema, loader, graph and validator — a library with no LLM dependency, installable and runnable without an API key. `champion/` is the agent workflow and depends on `core`. The dependency runs one way only. The Conductor's lint will later sit on `core` too, which is the reason for the split. Agent dependencies live in the optional `agent` extra; a test asserts `core` imports cleanly without it, so never add a convenience import that breaks the minimal install.
 
+**No API client in this codebase.**
+The datastore is git, not a git host. Every core command — `init`, `validate`, `score`, `graph`, `diff` — must work against a bare repo with no remote. Host-specific behaviour is confined to two places: output *formats* selected by `--platform`, and editable example workflows under `.github/`. Never add an HTTP call to a hosting platform, never import a platform SDK, and never make a core command depend on a remote existing. The README's portability claim is only true while this holds.
+
 **Nothing leaves the machine by default.**
 LangSmith tracing is opt-in via environment variable. Trace payloads carry prompt content, which here is an organisation's OKRs. Never enable it in code, a config default, or a test fixture. Checkpoints go in the OS app-data directory, never the OKR repo. The model is pinned to `claude-sonnet-5` — never substitute an alias, because article evidence has to stay reproducible. See ADR-0004.
 
 **The goal topology is a graph, not a tree.**
 A key result can support multiple parent objectives. OKRs are created both cascading (top-down) and laddering (bottom-up). Any code, test or example that assumes a single parent is wrong. Referential integrity is not free in flat files — dangling IDs and accidental cycles are the failure mode this project exists to prevent, so validation is a first-class feature, not a nicety.
+
+Edges are declared on the **needy side**: a child declares what it `supports`, a dependent declares what it `depends_on`, and nothing is ever declared on the parent or provider. Cycles in `supports` are errors; cycles in `depends_on` are warnings that still exit zero, so the validator needs severity levels. See ADR-0006 and ADR-0007.
 
 **Errors carry stable codes.**
 Validation violations get machine-readable codes (e.g. `E001_DANGLING_REF`), because the Conductor will consume them later. Never let a validation failure surface as a raw traceback, and never write a test that asserts on error message text — assert on the code.
@@ -84,11 +101,17 @@ An OKR repo (what a user owns — for reference, we do not ship this):
 
 ```
 acme-okrs/
-  okr.yaml                    # marker: schema_version, okr_dir
-  okrs/
-    company/2026-q3.yaml
+  okr.yaml          # marker: schema_version, period, okr_dir,
+                    #   optional metrics_file and owners_file
+  metrics.yaml      # declared metric vocabulary — ADR-0009
+  owners.yaml       # declared owners, optional platform handles — ADR-0010
+  okrs/             # one file per team is the recommended layout,
+    company/2026-q3.yaml    #   but the loader is layout-agnostic
     support/2026-q3.yaml
+    platform/2026-q3.yaml
 ```
+
+A worked example with the YAML behind it is in [`docs/GRAPH-BY-EXAMPLE.md`](docs/GRAPH-BY-EXAMPLE.md).
 
 ## Commands
 
@@ -103,10 +126,16 @@ uv run pre-commit install    # once, per clone
 CLI (built in Phase 1, entry point `okr`). Run from anywhere inside an OKR repo — the path argument is optional and defaults to walking up for `okr.yaml`:
 
 ```bash
+okr init        # scaffold a valid empty OKR repo
 okr validate    # load, resolve, validate the whole graph; non-zero exit on violation
 okr score       # completeness score with per-dimension breakdown
 okr graph       # print the resolved graph
+okr diff        # graph-level diff between two revisions, rendered in prose
+                #   --reviewers  owners affected by cross-boundary edge changes
+okr codeowners  # derive a CODEOWNERS mapping; prints to stdout, never writes
 ```
+
+Every one of these must work against a bare repo with no remote.
 
 ## Conventions
 
@@ -117,7 +146,7 @@ okr graph       # print the resolved graph
 
 ## Working agreements
 
-- **Follow the ADR.** If `docs/adr/` covers the decision, implement it as written. If it doesn't, or if implementing it reveals the ADR is wrong, stop and say so — do not decide silently in code.
-- **Log the surprises.** Design decisions, rejected alternatives and anything unexpected go in `docs/BUILD_LOG.md` as you go. This repo's build is being written up publicly, and reconstructing the log afterwards produces a worse and less honest article.
+- **Follow the ADR.** `docs/adr/` is the source of truth; this file is a summary of it. If an ADR covers the decision, implement it as written. If it doesn't, or if implementing it reveals the ADR is wrong, stop and say so — do not decide silently in code.
+- **This file drifts. Update it in the same commit.** When an ADR lands or is amended, check whether it changed anything stated here — an invariant, the layout, a marker field, a command. Summaries rot silently while every individual ADR stays correct, and a stale invariant is worse than a missing one because it will be believed.
 - **The completeness score measures whether a spec is filled in, not whether the OKR is good.** Do not let that distinction blur in code, output text or docs.
 - **Write for the goal owner, not the developer.** Validation errors, CLI help and schema docs are read by a support lead in a PR review, not by us. No Python identifiers, no stack traces, no "see `core/loader.py`".
