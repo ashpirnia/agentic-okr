@@ -65,3 +65,38 @@ ADR-0010 wrote a whole file to eliminate, arriving through a different door.
 **`extra="forbid"` everywhere.** ADR-mandated in effect (`E102` exists), but worth naming
 as the single highest-value line in the module: `anti_target:` instead of `anti_targets:`
 would otherwise produce a spec that reads as complete in review and asserts nothing.
+
+---
+
+## Guarding the minimal install — `tests/test_minimal_install.py`
+
+`CLAUDE.md` asserted that a test proved `core` imports without the `agent` extra. No such
+test existed, and the CI workflow installed with `--all-extras`, so the minimal path had
+never once been exercised.
+
+**The obvious test proves nothing.** `import agentic_okr.core` succeeds whether or not
+`langgraph` is installed. On any machine that has the extra — every developer's, and the
+main CI job — an import test passes while the rule is being broken. So the guard reads the
+source: an AST walk over everything outside `champion/`, failing on a module-level import
+of an agent distribution or of `champion`. That fails everywhere, immediately, in the same
+run as the change that broke it. The CI job that installs without extras is the second
+half rather than the whole of it: it catches what static reading cannot, such as a
+dependency arriving through a transitive import.
+
+That job asserts `import langgraph` *fails* before it asserts anything else. Without that,
+a change to the install step would silently turn the job into a duplicate of the main one
+— a green check proving nothing, which is worse than no job.
+
+**Function-level imports are deliberately allowed.** The rule is about what happens at
+import time, and deferring an optional dependency into the function that needs it is how
+shared code will eventually reach the Champion. A blanket ban would have no escape hatch
+and would be worked around rather than obeyed.
+
+**The forbidden list is derived from `pyproject.toml`, not hardcoded**, so adding a
+package to the `agent` extra extends the guard automatically. Two transitive packages
+(`anthropic`, `langsmith`) are named explicitly, since nothing declares them and importing
+one from `core` breaks the install just as surely.
+
+Also removed here: the CI step that tolerated pytest's exit code 5. It existed because no
+tests were collected during bootstrap. Tests exist now, so it had stopped protecting
+anything and started hiding a total collection failure.

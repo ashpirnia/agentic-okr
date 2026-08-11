@@ -29,11 +29,37 @@ jobs:
         run: uv run ruff format --check .
 
       - name: Run tests
+        run: uv run pytest
+
+  # The install a user gets who wants the schema, loader, validator and CLI and never
+  # intends to run the agent. `uv sync` without --all-extras leaves out the `agent`
+  # extra, so this is the only job where importing langgraph from core actually fails.
+  # tests/test_minimal_install.py guards the same rule statically, in every job.
+  minimal-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install without the agent extra
+        run: uv sync
+
+      - name: Confirm the agent extra really is absent
         run: |
-          uv run pytest || code=$?
-          code=${code:-0}
-          # Exit code 5 means no tests were collected; the core/champion
-          # packages don't have tests yet during early bootstrap.
-          if [ "$code" -ne 0 ] && [ "$code" -ne 5 ]; then
-            exit "$code"
+          if uv run python -c "import langgraph" 2>/dev/null; then
+            echo "langgraph is installed, so this job proves nothing about the minimal install."
+            exit 1
           fi
+
+      - name: The schema, loader and CLI import with no agent dependencies
+        run: uv run python -c "import agentic_okr, agentic_okr.core"
+
+      - name: Run tests
+        run: uv run pytest
