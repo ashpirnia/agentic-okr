@@ -25,9 +25,10 @@ schema_version: 1            # required — validated against a supported set
 period: 2026-Q3              # required — time-bounds every key result
 okr_dir: okrs/               # required — where goal files live
 metrics_file: metrics.yaml   # optional — defaults to metrics.yaml
+owners_file: owners.yaml     # optional — defaults to owners.yaml (ADR-0010)
 ```
 
-Four fields, and **nothing else**. Organisation name, team registry, default owner, cadence configuration and notification settings will all be proposed; each is refused until something reads it. This file will attract accretion precisely because it is the obvious place to put anything global.
+Four fields plus two optional path overrides, and **nothing else**. Organisation name, team registry, default owner, cadence configuration and notification settings will all be proposed; each is refused until something reads it. This file will attract accretion precisely because it is the obvious place to put anything global.
 
 ### Failure behaviour
 
@@ -68,3 +69,5 @@ Four fields, and **nothing else**. Organisation name, team registry, default own
 **Accepting older schema versions with a warning.** Forward-looking and kinder to adopters mid-migration. Rejected as untestable speculation — no older versions exist, so the code would encode assumptions about a migration path nobody has designed. It is also how a bug that only appears in v2 gets shipped in v1.
 
 **A richer marker — organisation name, team registry, default owner, cadence.** Each is plausibly useful and the marker is the obvious home. Rejected wholesale on [ADR-0005](0005-node-types.md)'s thin-v1 rule: nothing reads any of them. A team registry is the most tempting, since it would let the tool validate that owner strings are real — but ownership resolution belongs with the Conductor, which knows about identity, and duplicating it here would create a second place for it to drift.
+
+> **Refined by [ADR-0010](0010-owner-identity.md).** The rejection of a registry *on the marker* stands; the marker keeps its four fields. But the reasoning conflated two things. Declaring **which owner IDs exist** is vocabulary and belongs in the OKR repo — it now lives in `owners.yaml`, exactly as metric declarations do. Resolving an owner ID to a GitHub team or an email address is identity, and that remains the Conductor's. The marker gains an optional `owners_file` path alongside `metrics_file`.

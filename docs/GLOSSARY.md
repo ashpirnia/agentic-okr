@@ -182,6 +182,24 @@ Divergence between what a goal said and what it meant, visible in behaviour rath
 
 An adopting organisation's goal repository: YAML only, rooted at an `okr.yaml` marker, owned and versioned by them. Never refers to the `agentic-okr` source repository.
 
+### ⚙️ Owner
+
+Declared once in `owners.yaml` and referenced by ID everywhere else. Both objectives and key results require one, and they mean different things:
+
+| | **Objective owner** | **Key result owner** |
+| :--- | :--- | :--- |
+| Is the | executive sponsor | person doing the work |
+| Holds | the qualitative vision — the *what* and *why* | the measurable |
+| Also | **breaks ties** when KR owners disagree | — |
+
+The tie-breaker role is why the objective's owner is required. A co-owned objective spreads work across teams whose priorities will diverge, and one with no sponsor has no resolution path when they do.
+
+Declared rather than free text because owner identity is the join key review routing acts on — unvalidated strings let `head_of_support` and `head-of-support` become two people, and a cross-team review route to neither. Same reasoning that made **metric** a declared thing.
+
+An ID names the role, not the person currently in it, so it survives someone changing jobs.
+
+An optional `handles` map carries platform names — `github: "@acme/platform"` — used to generate `CODEOWNERS`. Deeper identity resolution, such as email or directory lookup, stays with the Conductor.
+
 ### ⚙️ Period
 
 The cycle an OKR repo covers, declared once in `okr.yaml` — for example `2026-Q3`. One repo holds one live graph, so the period time-bounds every key result in it. Last cycle is a previous commit; rolling over is a pull request.

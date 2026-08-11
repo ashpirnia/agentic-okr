@@ -191,12 +191,19 @@ erDiagram
         string period "required, e.g. 2026-Q3"
         path okr_dir "required"
         path metrics_file "optional, default metrics.yaml"
+        path owners_file "optional, default owners.yaml"
+    }
+
+    OWNER {
+        slug id PK "declared once, referenced everywhere"
+        string name "display name"
+        map handles "optional, e.g. github - for CODEOWNERS"
     }
 
     OBJECTIVE {
         slug id PK "team-namespaced, author-chosen"
         string statement
-        string owner "accountable lead"
+        slug owner FK "required, the accountable lead"
         enum commitment "committed | aspirational, required"
     }
 
@@ -204,7 +211,7 @@ erDiagram
         slug id PK "team-namespaced, never parent-namespaced"
         string statement
         enum type "milestone | metric, required"
-        string owner "required, enables co-owned objectives"
+        slug owner FK "required, who does the work"
         enum commitment "optional, overrides its objective"
         slug metric FK "metric type only"
         number target "metric type only"
@@ -235,6 +242,10 @@ erDiagram
 
     OKR_YAML ||--|{ OBJECTIVE : "scopes the repo"
     OKR_YAML ||--|{ METRIC : "locates via metrics_file"
+    OKR_YAML ||--|{ OWNER : "locates via owners_file"
+
+    OWNER ||--o{ OBJECTIVE : "sponsors, breaks ties on"
+    OWNER ||--o{ KEY_RESULT : "does the work on"
 
     OBJECTIVE ||--|{ KEY_RESULT : "contains — the implicit supports edge"
     OBJECTIVE }o--o{ OBJECTIVE : "supports"
@@ -253,7 +264,9 @@ erDiagram
 
 This is the *structure*. For the same model as an actual organisation's goal graph, see [GRAPH-BY-EXAMPLE.md](GRAPH-BY-EXAMPLE.md).
 
-**Only three entities have identity.** `OBJECTIVE`, `KEY_RESULT` and `METRIC` carry IDs and can be referenced from elsewhere. The other four are embedded in the key result that sets them — they are drawn as entities here because they have structure, not because they are addressable. The test that produced that split: *something outside its parent must reference it by ID*.
+**Only four entities have identity.** `OBJECTIVE`, `KEY_RESULT`, `METRIC` and `OWNER` carry IDs and can be referenced from elsewhere. The other three are embedded in the key result that sets them — they are drawn as entities here because they have structure, not because they are addressable. The test that produced that split: *something outside its parent must reference it by ID*.
+
+`METRIC` and `OWNER` are declared once and referenced by ID for the same reason: both are join keys that would otherwise drift. An unvalidated owner string lets `head_of_support` and `head-of-support` become two people, and a cross-team review route to neither ([ADR-0010](adr/0010-owner-identity.md)).
 
 **Every relation between the three identified entities is an edge in the goal graph.** Note `KEY_RESULT }o--o{ OBJECTIVE` — a key result may support several parent objectives, which is what makes this a network rather than a tree. Containment is the *primary* supports edge, materialised by the loader rather than written by an author.
 

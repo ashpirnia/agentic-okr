@@ -82,6 +82,36 @@ period: 2026-Q3
 okr_dir: okrs/
 ```
 
+`metrics_file` and `owners_file` are omitted, so they default to `metrics.yaml` and `owners.yaml` at the repo root.
+
+### `owners.yaml`
+
+Who exists. Every `owner` field must resolve to one of these, so a typo is a dangling reference rather than a silently invented second person.
+
+```yaml
+owners:
+  - id: ceo
+    name: Chief Executive
+  - id: cro
+    name: Chief Revenue Officer
+  - id: head-of-support
+    name: Head of Support
+    handles:
+      github: "@acme/support-leads"
+  - id: support-eng-lead
+    name: Support Engineering Lead
+  - id: head-of-platform
+    name: Head of Platform
+    handles:
+      github: "@acme/platform"
+```
+
+An ID names the *role*, not the person in it, so it survives someone changing jobs.
+
+The optional `handles` map is what `okr codeowners` uses to generate path-based review rules. It stops at review handles — anything deeper, like email or a directory lookup, is the Conductor's.
+
+Notice that objective owners here are senior leaders while key result owners are department heads and technical leads. That is the intended shape: the objective's owner is the **executive sponsor** who holds the vision and breaks ties when key result owners disagree; the key result's owner does the work.
+
 ### `metrics.yaml`
 
 The shared vocabulary. A metric belongs here when a key result targets it or a guardrail watches it — not because the organisation happens to track it.
@@ -269,10 +299,29 @@ That is the routing gap [ADR-0006 Amendment 1](adr/0006-edge-semantics.md) exist
 ```
 + dependency
     support.resolution-time now depends on platform.api-v2
-    → needs review from: platform
+    → needs review from: Head of Platform
 ```
 
-The edge crosses an ownership boundary, so Platform is added as a reviewer. Their merge is the commitment; there is no `accepted:` field, because a field could assert agreement nobody gave.
+The edge crosses an ownership boundary, so Platform is added as a reviewer. That comparison is exact rather than approximate, because both owners resolve to declared IDs — had `owner` been free text, `head-of-platform` and `head_of_platform` would be two people and the review would route to neither.
+
+**Two routing mechanisms, and they cover different things.**
+
+| | Catches | Driven by |
+| :--- | :--- | :--- |
+| `CODEOWNERS` | someone edited *your team's file* | file paths |
+| `okr diff --reviewers` | someone in *another* file made a commitment about you | graph content |
+
+Neither covers the other, and both answer the same question. So `CODEOWNERS` is generated rather than hand-written:
+
+```
+okr codeowners
+
+/okrs/company/    @acme/support-leads
+/okrs/support/    @acme/support-leads
+/okrs/platform/   @acme/platform
+```
+
+It prints to stdout rather than writing the file, because your `CODEOWNERS` probably covers paths this tool knows nothing about. Piping it through `diff` in CI catches the case where committed review rules have drifted from who actually owns the goals. Their merge is the commitment; there is no `accepted:` field, because a field could assert agreement nobody gave.
 
 ---
 
