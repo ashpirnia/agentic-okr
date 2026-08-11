@@ -1,6 +1,6 @@
 # ADR-0009 — Guardrail metrics, restraints and anti-targets
 
-**Status:** Accepted
+**Status:** Accepted — amended 2026-08-07, see Amendments
 **Date:** 2026-08-07
 **Deciders:** Ash, Claude
 
@@ -32,14 +32,14 @@ guardrails:
   - metric: csat
     must_not_fall_below: 4.2
 
-restraints:
-  - A ticket may not be closed with a boilerplate "please reopen if this persists"
-
 anti_targets:
   - description: Mass-close tickets with a canned reply and let the customer chase you
     origin: authored
+    restraint: A ticket may not be closed with a boilerplate "please reopen if this persists"
     watched_by: [reopen_rate_7d]
 ```
+
+*The shape above reflects Amendment 1. The Decision text below describes restraints as a separate top-level list; that was superseded.*
 
 ### Metric carries `id`, `definition` and `unit` — nothing else
 
@@ -100,3 +100,43 @@ They pair naturally — "mass-close with a canned reply" is the move, "may not c
 **Including `discovered` in the value set now.** Completes the set and lets the demo stage a discovered anti-target to illustrate the loop. Rejected because nothing discovers anything in v1: a staged value would be illustration dressed as evidence, in an article whose credibility rests on being straight about what is built. The Shepherd adds it when the Shepherd exists, which costs one enum value.
 
 **Guardrails as first-class nodes so `watched_by` could reference them directly.** More precise than pointing at a metric, since it would name the specific threshold. Rejected — ADR-0005 settled this — and the metric reference is sufficient because the validator checks the metric is guarded *on this key result*, which is the property that matters.
+
+## Amendments
+
+### Amendment 1 · 2026-08-07 — Restraint nests inside the anti-target
+
+The original decision kept `restraints` and `anti_targets` as parallel lists, justified as "normative versus descriptive." That distinction survives an ADR but not contact with an author:
+
+- anti-target: *Mass-close tickets with a canned reply and let the customer chase you*
+- restraint: *A ticket may not be closed with a boilerplate "please reopen if this persists"*
+
+Same behaviour, different grammatical mood. Asked to fill in both fields, a goal owner writes one sentence twice. A schema that invites that has a real defect, and no amount of documentation fixes a distinction a reader can only apply once they already understand it.
+
+**The real difference was mis-sited.** It is not about the sentence's mood, it is about *what defends against the move*:
+
+- A **rule** is checked against an agent's configuration, statically, before anything runs — piece 3's lint compares an agent's task definition against exactly this.
+- A **metric** is watched while the fleet runs — the Shepherd's job.
+
+So a restraint and a `watched_by` are not siblings of the anti-target. They are its two defences, one static and one dynamic.
+
+**The decision.** `restraint` becomes an optional field on the anti-target, alongside `watched_by`. The top-level `restraints` list is removed.
+
+```yaml
+anti_targets:
+  - description: Mass-close tickets with a canned reply and let the customer chase you
+    origin: authored
+    restraint: A ticket may not be closed with a boilerplate "please reopen if this persists"
+    watched_by: [reopen_rate_7d]
+```
+
+**Consequences.**
+
+*"Which field does this go in?" stops being a question.* There is one place to name a gaming move, and two places to say what stops it.
+
+*The completeness check gets sharper than the original.* The first version flagged an anti-target with no `watched_by`. The better check is an anti-target with **neither** a restraint nor a watching metric — named but wholly undefended. One defence missing is a gap; both missing is a worry written down and nothing more.
+
+*The two defences map onto the two enforcement points*, which is a property worth having in the schema's shape: the restraint is what the Conductor lints against at wiring time, the metric is what the Shepherd watches at run time. A move defended only statically survives an agent that finds a different route to it; a move defended only dynamically is caught after it has already happened.
+
+*The term survives, refined.* "Restraint clause" remains published vocabulary from piece 3, now defined as the rule forbidding a named anti-target rather than as a free-standing instrument. The glossary states the refinement rather than implying the articles said it.
+
+**Reversing an earlier rejection.** The original rejected nesting because "not every restraint originates from a predicted gaming move — some are policy, or the residue of an incident." That does not hold. A policy unconnected to gaming *this* key result does not belong in the key result's spec at all, and an incident-derived rule has an implied move behind it — the thing that caused the incident. Neither produces a restraint with no anti-target.

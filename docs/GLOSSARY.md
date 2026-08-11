@@ -101,11 +101,13 @@ Guardrails are embedded in the key result that sets them, because the same metri
 
 ### ⚙️ Restraint clause
 
-Something you would never do to hit the number, stated outright: *a ticket may not be closed with a boilerplate "please reopen if this persists."*
+The rule forbidding a named anti-target, stated outright: *a ticket may not be closed with a boilerplate "please reopen if this persists."*
 
 Named restraint because it makes visible the self-restraint humans supply silently and agents do not.
 
-**Normative**, where an anti-target is descriptive. A restraint is a rule the owner declares; an anti-target is a move the Champion predicts. They pair — the restraint above forbids the anti-target below — but they come from different acts, which is why they are separate fields.
+**A restraint is one of an anti-target's two defences, not a thing in its own right.** It is written as a field on the anti-target it forbids. The other defence is a watching metric. See **anti-target** for how the two differ.
+
+*Refinement on piece 3, which introduced restraint clauses and anti-targets as separate instruments. In practice authors wrote the same sentence twice — once as a prediction, once as a prohibition — so the implementation nests one inside the other.*
 
 ### ⚙️ Anti-target
 
@@ -113,7 +115,18 @@ A one-sentence description of an action that would technically hit the metric wh
 
 The sharpest instrument here. Its diagnostic form, from piece 2: *for each key result, can you write down in one sentence the action that would technically hit the metric but violate the spirit?* If you can, your team has been silently restraining themselves — and that restraint will not be in the agents you deploy against the same target.
 
-Carries an `origin` recording whether the owner authored it or the Champion proposed it and a human confirmed. It may also list the metrics that would detect the move; an anti-target nothing watches is a worry rather than a control.
+Carries an `origin` recording whether the owner authored it or the Champion proposed it and a human confirmed.
+
+**An anti-target names a move. It carries up to two defences against it:**
+
+| | **Restraint** | **Watching metric** |
+| :--- | :--- | :--- |
+| Is a | rule | measurement |
+| Catches the move | on paper, before anything runs | in the numbers, while it runs |
+| Checked by | the Conductor's lint, against an agent's configuration | the Shepherd, against live readings |
+| Fails when | an agent finds a different route to the same move | the damage has already started |
+
+An anti-target with **neither** is named but wholly undefended — the sharpest single check the completeness score makes. One missing is a gap; both missing is a worry written down and nothing more.
 
 ### ⚙️ Metric
 

@@ -2,7 +2,7 @@
 
 Three roles, three stores, one loop. Diagrams are Mermaid so they render on GitHub, diff in review, and stay in the repo alongside the decisions they illustrate.
 
-Terms used here are defined in [GLOSSARY.md](GLOSSARY.md).
+Terms used here are defined in [GLOSSARY.md](GLOSSARY.md). For what a real goal graph looks like — a worked three-team example with its YAML — see [GRAPH-BY-EXAMPLE.md](GRAPH-BY-EXAMPLE.md).
 
 **Read the legend.** Only a fraction of this is built. Solid means it exists in v1; dashed means it is designed and deliberately deferred by [ADR-0003](adr/0003-v1-scope.md).
 
@@ -225,11 +225,8 @@ erDiagram
     ANTI_TARGET {
         string description "the gaming move, one sentence"
         enum origin "authored | proposed"
-        slug_list watched_by "optional; metrics that would detect it"
-    }
-
-    RESTRAINT {
-        string text "the prohibition"
+        string restraint "optional defence 1 - the rule forbidding it"
+        slug_list watched_by "optional defence 2 - metrics that detect it"
     }
 
     SUCCESS_CRITERION {
@@ -247,13 +244,14 @@ erDiagram
 
     KEY_RESULT ||--o{ GUARDRAIL : "embeds"
     KEY_RESULT ||--o{ ANTI_TARGET : "embeds"
-    KEY_RESULT ||--o{ RESTRAINT : "embeds"
     KEY_RESULT ||--o{ SUCCESS_CRITERION : "embeds"
 
     KEY_RESULT }o--o| METRIC : "targets"
     GUARDRAIL }o--|| METRIC : "references"
     ANTI_TARGET }o--o{ METRIC : "watched_by"
 ```
+
+This is the *structure*. For the same model as an actual organisation's goal graph, see [GRAPH-BY-EXAMPLE.md](GRAPH-BY-EXAMPLE.md).
 
 **Only three entities have identity.** `OBJECTIVE`, `KEY_RESULT` and `METRIC` carry IDs and can be referenced from elsewhere. The other four are embedded in the key result that sets them — they are drawn as entities here because they have structure, not because they are addressable. The test that produced that split: *something outside its parent must reference it by ID*.
 

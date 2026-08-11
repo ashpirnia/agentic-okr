@@ -55,7 +55,7 @@ The `anti_targets` field is the sharpest instrument here, and it comes straight 
 
 That piece has five more questions worth running against your own OKR set. They need no tooling and will surface uncomfortable things.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams of the components, the ownership boundary, and the loop — with what is built in v1 marked apart from what is designed and deferred. [docs/GLOSSARY.md](docs/GLOSSARY.md) defines every term, marking standard OKR vocabulary apart from what this project adds.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams of the components, the ownership boundary, and the loop — with what is built in v1 marked apart from what is designed and deferred. [docs/GLOSSARY.md](docs/GLOSSARY.md) defines every term, marking standard OKR vocabulary apart from what this project adds. [docs/GRAPH-BY-EXAMPLE.md](docs/GRAPH-BY-EXAMPLE.md) walks a three-team organisation through the whole format — the graph drawn, then the YAML that produces it.
 
 ## Two repos, not one
 

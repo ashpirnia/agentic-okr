@@ -41,13 +41,46 @@ There is no acknowledgement field, no `accepted: true`, no mutual declaration. T
 
 ### Legal shapes
 
-| Edge | From | To | |
-| :--- | :--- | :--- | :--- |
-| `supports` | Objective | Objective | Laddering between levels |
-| `supports` | Objective | KeyResult | The cascade — a parent's KR becomes a child's objective |
-| `supports` | KeyResult | Objective | A key result serving one or more parent objectives |
-| `supports` | KeyResult | KeyResult | **Illegal** — that relationship is `depends_on` |
-| `depends_on` | KeyResult | KeyResult | Interlocking key results |
+```mermaid
+flowchart LR
+    subgraph s1 ["✅ supports · O → O"]
+        direction LR
+        A1(["🎯 child"]) ==> A2(["🎯 parent"])
+    end
+
+    subgraph s2 ["✅ supports · O → KR — the cascade"]
+        direction LR
+        B1(["🎯 child"]) ==> B2["📊 parent's KR"]
+    end
+
+    subgraph s3 ["✅ supports · KR → O"]
+        direction LR
+        C1["📊 key result"] ==> C2(["🎯 parent"])
+    end
+
+    subgraph s4 ["❌ supports · KR → KR"]
+        direction LR
+        D1["📊 key result"] ==x D2["📊 key result"]
+    end
+
+    subgraph s5 ["✅ depends_on · KR → KR"]
+        direction LR
+        E1["📊 blocked"] --> E2["📊 blocker"]
+    end
+
+    classDef obj fill:#1a7f4b,stroke:#0d5c34,color:#fff
+    classDef kr fill:#1f3a5f,stroke:#14273f,color:#fff
+    classDef bad fill:#6b2020,stroke:#3f1414,color:#fff
+    class A1,A2,B1,C2,E0 obj
+    class B2,C1,E1,E2 kr
+    class D1,D2 bad
+```
+
+🎯 objective · 📊 key result. Arrows point from the child or the dependent, since edges are declared on the needy side.
+
+A key result contributes to *objectives* and unblocks *key results*. `supports` between two key results is always the wrong relationship — what the author means is `depends_on`.
+
+A worked example carrying all five shapes at once is in [GRAPH-BY-EXAMPLE.md](../GRAPH-BY-EXAMPLE.md).
 
 ### Nesting is an edge
 
