@@ -210,9 +210,11 @@ The three-way ownership boundary. **Intent** is what you meant, lives in git, wr
 
 ### ⚙️ Completeness score
 
-A measure of whether a spec is *filled in* — success criteria present and testable, guardrails present, anti-targets present, ownership set, type-appropriate fields supplied.
+A count of structural checks a spec satisfies, reported as `n of m` — four per key result (success criteria, guardrails, anti-targets, and every anti-target defended) and one per objective (not build-trapped).
 
-It does not claim the objective is a good one to pursue. That distinction must not blur in code, output text or docs.
+Deterministic and reproducible: every check is computable from the graph, with no model involved and no weighting to argue about. Judgment about whether a success criterion is *meaningful* is separate, comes from the Champion, and takes the form of questions rather than a number.
+
+It does not claim the objective is a good one to pursue. An under-specified good goal and an under-specified bad one score identically. That distinction must not blur in code, output text or docs.
 
 ### 📖 Build trap
 

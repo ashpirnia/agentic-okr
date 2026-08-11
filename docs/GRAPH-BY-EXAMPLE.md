@@ -325,6 +325,40 @@ It prints to stdout rather than writing the file, because your `CODEOWNERS` prob
 
 ---
 
+## What the completeness score says about it
+
+`okr score` counts structural checks — four per key result, one per objective. Every check is computable from the graph, so the number is reproducible by hand ([ADR-0011](adr/0011-completeness-rubric.md)).
+
+```
+okr score
+
+company.retention                    1 of 1
+  company.net-retention              2 of 4  (50%)  [committed]
+      missing: guardrails, anti-targets
+
+support.fast-resolution              1 of 1
+  support.resolution-time            4 of 4 (100%)  [committed]
+  support.self-serve                 2 of 4  (50%)  [aspirational]
+      missing: guardrails, anti-targets
+
+platform.reliability                 0 of 1
+      build trap: every key result is a milestone
+  platform.api-v2                    2 of 4  (50%)  [committed]
+      missing: guardrails, anti-targets
+
+                                    12 of 19 (63%)
+```
+
+**`support.resolution-time` scores 4 of 4** — it is the one objective in this example that has been through the Champion. The others are as a human would first write them, which is why the gap is visible.
+
+**Platform's objective fails the build-trap check on purpose.** Its only key result is "ship API v2" — a milestone. The organisation has said what it will build and nothing about whether building it worked. That is Doerr's build trap exactly, and it is extremely common: a platform team ships an API and declares the goal met, with no measure of whether anyone's life improved.
+
+The check is structural, so it fires without judgment. The facilitation prompt it produces is the useful part: *"you have said what you will ship — how will you know it worked?"* A metric key result like "Support's ticket tooling runs entirely on v2 by end of quarter" would satisfy it.
+
+**What the score does not say** is whether these are the right goals. `company.net-retention` at 2 of 4 is not a bad objective; it is an under-specified one. A perfectly-conceived goal with no anti-targets scores the same as a badly-conceived one with none.
+
+---
+
 ## What this example does not show
 
 - **Progress.** No current values, no percentages. Those are observation and live in the Shepherd's store ([ADR-0001](adr/0001-git-holds-intent.md)).
