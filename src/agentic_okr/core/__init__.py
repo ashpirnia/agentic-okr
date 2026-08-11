@@ -13,6 +13,7 @@ from .codes import Code, Severity
 from .graph import Edge, EdgeKind, Graph, Node, NodeKind, Reference, RefKind, Source
 from .loader import find_root, load
 from .models import (
+    CURRENT_SCHEMA_VERSION,
     SUPPORTED_SCHEMA_VERSIONS,
     AntiTarget,
     AntiTargetOrigin,
@@ -31,10 +32,12 @@ from .models import (
     RepoMarker,
     SupportsEdge,
 )
+from .scaffold import Scaffold, ScaffoldRefused, create
 from .validate import Report, validate
 from .violations import LoadError, Violation, sort_violations
 
 __all__ = [
+    "CURRENT_SCHEMA_VERSION",
     "SUPPORTED_SCHEMA_VERSIONS",
     "AntiTarget",
     "AntiTargetOrigin",
@@ -61,10 +64,13 @@ __all__ = [
     "Reference",
     "Report",
     "RepoMarker",
+    "Scaffold",
+    "ScaffoldRefused",
     "Severity",
     "Source",
     "SupportsEdge",
     "Violation",
+    "create",
     "find_root",
     "load",
     "sort_violations",

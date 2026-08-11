@@ -1,0 +1,17 @@
+# The quantities your goals are allowed to talk about, declared here once and referred
+# to by ID everywhere else.
+#
+# This ID is the join between what you meant, where the number is read from, and what
+# was recorded — so 'csat' and 'CSAT' becoming two different metrics is a failure worth
+# catching. A metric ID that nothing here declares is an error.
+#
+# The measurement window belongs in the ID: reopen_rate_7d and reopen_rate_30d are two
+# metrics, not one metric read two ways.
+#
+# A repo whose key results are all things you ship, rather than numbers you move, has
+# no metrics to declare. Leaving this file empty is fine.
+
+# metrics:
+#   - id: resolution_time_p50
+#     definition: Median time from ticket creation to resolution
+#     unit: hours

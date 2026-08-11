@@ -56,8 +56,13 @@ def unreadable(tmp_path: Path) -> Path:
     return write_repo(tmp_path, support="objectives:\n  - id: x\n   statement: bad indent\n")
 
 
-def run(*arguments: str) -> Any:
-    result = runner.invoke(app, list(arguments))
+def run(*arguments: str, typed: str | None = None) -> Any:
+    """Invoke the CLI, failing loudly if anything escaped as an exception.
+
+    `typed` is what somebody enters at a prompt, which is how `okr init` gets a period
+    when it was not passed one.
+    """
+    result = runner.invoke(app, list(arguments), input=typed)
     assert result.exception is None or isinstance(result.exception, SystemExit), (
         f"The command raised instead of reporting:\n{result.output}"
     )
@@ -67,6 +72,54 @@ def run(*arguments: str) -> Any:
 def payload(*arguments: str) -> dict[str, Any]:
     """The machine output of a command, parsed. Anything but JSON is a broken contract."""
     return json.loads(run(*arguments).output)
+
+
+#: What must never appear in front of a goal owner. Each one means an internal failure
+#: escaped instead of being reported as a sentence with a code beside it.
+LEAKS = ("Traceback", "agentic_okr", ".py", "core/", "pydantic", "Error:")
+
+
+def assert_reads_like_prose(output: str) -> None:
+    for leak in LEAKS:
+        assert leak not in output, f"{leak!r} leaked into what a goal owner reads:\n{output}"
+
+
+# --- init --------------------------------------------------------------------------------
+
+
+def test_init_creates_a_repo_that_validates(tmp_path: Path) -> None:
+    """The whole promise of the command, from the outside: scaffold, then check it."""
+    assert run("init", str(tmp_path), "--period", "2026-Q3").exit_code == 0
+    assert run("validate", str(tmp_path)).exit_code == 0
+
+
+def test_init_asks_for_the_period_when_it_is_not_given(tmp_path: Path) -> None:
+    result = run("init", str(tmp_path), typed="2026-H1\n")
+
+    assert result.exit_code == 0
+    assert (tmp_path / "okrs" / "support" / "2026-h1.yaml").is_file()
+
+
+def test_init_creates_the_directory_it_is_pointed_at(tmp_path: Path) -> None:
+    target = tmp_path / "acme-okrs"
+
+    assert run("init", str(target), "--period", "2026-Q3").exit_code == 0
+    assert (target / "okr.yaml").is_file()
+
+
+def test_init_refuses_where_there_is_already_a_repo(repo: Path) -> None:
+    result = run("init", str(repo), "--period", "2026-Q3")
+
+    assert result.exit_code == 1
+    assert "already" in result.output
+
+
+def test_init_says_what_to_do_next(tmp_path: Path) -> None:
+    """A scaffold that does not say what to do next is a pile of files."""
+    result = run("init", str(tmp_path), "--period", "2026-Q3")
+
+    assert "okrs/support/2026-q3.yaml" in result.output
+    assert "okr validate" in result.output
 
 
 # --- validate: the exit code is the contract with CI -------------------------------------
@@ -152,10 +205,12 @@ def test_nothing_python_shaped_reaches_the_page(
     """
     path = request.getfixturevalue(fixture)
 
-    output = run(command, str(path)).output
+    assert_reads_like_prose(run(command, str(path)).output)
 
-    for leak in ("Traceback", "agentic_okr", ".py", "core/", "pydantic", "Error:"):
-        assert leak not in output, f"{leak!r} leaked into what a goal owner reads:\n{output}"
+
+def test_nothing_python_shaped_reaches_the_page_when_init_refuses(repo: Path) -> None:
+    assert_reads_like_prose(run("init", str(repo), "--period", "2026-Q3").output)
+    assert_reads_like_prose(run("init", str(repo / "okrs"), "--period", "2026-Q3").output)
 
 
 # --- validate: the machine contract ------------------------------------------------------

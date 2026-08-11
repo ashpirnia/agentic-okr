@@ -1,0 +1,22 @@
+# This file marks the root of your OKR repo.
+#
+# Anything reading your goals walks up from wherever it was run until it finds this
+# file, then loads everything beneath it — the whole set, never part of one. That is
+# what stops one team's directory being checked on its own and passing, while the
+# connection it made to another team's goal quietly points at nothing.
+
+# Which version of the OKR schema this repo is written against. Checked exactly: a
+# tool that cannot read this repo says so rather than guessing.
+schema_version: 1
+
+# The cycle these goals cover. One repo holds one live cycle, which is what puts every
+# key result in it inside a time box without a deadline on each one. Nothing parses
+# this — halves, quarters, trimesters and fiscal years are all fine.
+period: 2026-Q3
+
+# Where your goal files live, relative to this file. Every YAML file beneath it is
+# loaded, whatever it is called.
+okr_dir: okrs/
+
+# Your metrics and owners are read from metrics.yaml and owners.yaml beside this file.
+# Add 'metrics_file:' or 'owners_file:' here only if you want them somewhere else.

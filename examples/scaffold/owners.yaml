@@ -1,0 +1,12 @@
+# Everyone who can own a goal, declared here once and referred to by ID everywhere else.
+#
+# Declared rather than typed out each time, because review of a change goes to the
+# owners it affects: 'head-of-support' and 'head_of_support' would quietly become two
+# people, and a review that should reach one of them would reach neither. An owner ID
+# that nothing here declares is an error, which is the whole point of the file.
+#
+# Name the role rather than the person in it, so an ID survives somebody changing jobs.
+
+# owners:
+#   - id: head-of-support
+#     name: Head of Support

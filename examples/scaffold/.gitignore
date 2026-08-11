@@ -1,0 +1,10 @@
+# Nothing that reads your OKRs writes anything back into this repo — no caches, no
+# state, no generated files. So there is nothing of the tool's to ignore here.
+#
+# What is left is the usual local clutter.
+
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

@@ -36,6 +36,11 @@ from .codes import Code
 #: declaring anything else fails to load rather than being read on a guess (ADR-0008).
 SUPPORTED_SCHEMA_VERSIONS: Final = frozenset({1})
 
+#: What a new OKR repo declares. The newest version this release understands, derived
+#: rather than written down twice — a second literal is how `okr init` comes to scaffold
+#: a version the loader has moved past.
+CURRENT_SCHEMA_VERSION: Final = max(SUPPORTED_SCHEMA_VERSIONS)
+
 
 def _reject_blank(value: str) -> str:
     """Reject a required string that is present but has nothing in it."""

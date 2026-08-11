@@ -26,8 +26,18 @@ from typing import Annotated
 
 import typer
 from rich.console import Console
+from rich.text import Text
 
-from agentic_okr.core import Graph, LoadError, load, validate
+from agentic_okr.core import (
+    Graph,
+    LoadError,
+    Scaffold,
+    ScaffoldRefused,
+    create,
+    load,
+    validate,
+)
+from agentic_okr.core.scaffold import OKR_DIR
 
 from . import report, topology
 
@@ -42,6 +52,10 @@ app = typer.Typer(
     help="Check and read the OKRs in your OKR repo.",
     no_args_is_help=True,
     add_completion=False,
+    # Markdown, so a command's help reflows into paragraphs. The default treats every
+    # newline in a docstring as a line break, which wraps help text at whatever column
+    # the source happened to end on and reads as though it were badly formatted.
+    rich_markup_mode="markdown",
 )
 
 #: Where a human-readable report goes. Machine output bypasses this entirely — rich would
@@ -64,6 +78,80 @@ JsonOption = Annotated[
     bool,
     typer.Option("--json", help="Print the result as JSON instead, for another tool to read."),
 ]
+
+NewPathArgument = Annotated[
+    Path | None,
+    typer.Argument(
+        show_default=False,
+        metavar="[PATH]",
+        help=(
+            "Where to create your OKR repo. Leave it out to create one where you are "
+            "standing. The directory is created if it is not there."
+        ),
+    ),
+]
+
+PeriodOption = Annotated[
+    str,
+    typer.Option(
+        prompt="Which cycle do these goals cover (for example 2026-Q3)",
+        help=(
+            "The cycle this repo covers. One repo holds one live cycle. Anything reads: "
+            "2026-Q3, 2026-H1, FY27."
+        ),
+    ),
+]
+
+
+@app.command("init")
+def init_command(path: NewPathArgument = None, period: PeriodOption = ...) -> None:
+    """Create a new OKR repo, ready to write your first objective into.
+
+    Writes the marker that makes a directory an OKR repo, somewhere for your goal files
+    to live, and a commented example of each thing you will write — one owner, one
+    metric, one objective. Nothing is overwritten.
+    """
+    try:
+        scaffold = create(path or Path.cwd(), period)
+    except ScaffoldRefused as refused:
+        console.print(Text(str(refused), style="bold red"))
+        raise typer.Exit(1) from None
+
+    _render_scaffold(scaffold)
+    graph = _load_or_exit(scaffold.root, as_json=False)
+    result = validate(graph)
+    report.render_violations(console, result.violations)
+    report.render_summary(console, graph, result)
+    console.print()
+    console.print(_next_step(scaffold))
+    raise typer.Exit(0 if result.ok else 1)
+
+
+def _render_scaffold(scaffold: Scaffold) -> None:
+    """What was written, and what was already there and left alone."""
+    console.print(Text.assemble(("Created an OKR repo in ", ""), (str(scaffold.root), "bold")))
+    console.print()
+    for relative in scaffold.written:
+        console.print(Text(f"  {relative}"))
+    if scaffold.kept:
+        console.print()
+        console.print(Text("Already there, so left alone:", style="dim"))
+        for relative in scaffold.kept:
+            console.print(Text(f"  {relative}", style="dim"))
+    console.print()
+
+
+def _next_step(scaffold: Scaffold) -> Text:
+    """The one thing to do next. A scaffold that does not say this is a pile of files."""
+    goal_file = next(
+        (path for path in (*scaffold.written, *scaffold.kept) if path.parts[0] == OKR_DIR),
+        Path(OKR_DIR),
+    )
+    return Text.assemble(
+        ("Next: ", "bold"),
+        (f"open {goal_file} and write your first objective, "),
+        ("then run 'okr validate'."),
+    )
 
 
 @app.command("validate")

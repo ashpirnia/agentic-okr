@@ -97,6 +97,8 @@ src/agentic_okr/
   champion/   facilitation agent (LangGraph) — depends on core
 docs/adr/     architecture decision records; every schema field traces to one
 examples/     fixture OKR repos, each shaped like a real one
+              scaffold/ is generated — the verbatim output of `okr init`, and a
+              test fails if it stops matching, so the two cannot teach different shapes
 tests/
 ```
 
@@ -129,7 +131,8 @@ uv run pre-commit install    # once, per clone
 CLI (built in Phase 1, entry point `okr`). Run from anywhere inside an OKR repo — the path argument is optional and defaults to walking up for `okr.yaml`:
 
 ```bash
-okr init        # scaffold a valid empty OKR repo
+okr init        # scaffold a valid empty OKR repo; prompts for --period
+                #   never overwrites, and refuses inside an existing OKR repo
 okr validate    # load, resolve, validate the whole graph; non-zero exit on violation
                 #   --json  the same report for a machine
 okr score       # completeness score with per-dimension breakdown

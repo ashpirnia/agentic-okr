@@ -1,0 +1,23 @@
+# One team's goals for this cycle, reviewed together as a set.
+#
+# Rename this directory to one of your teams. One file per team is a recommendation and
+# nothing enforces it — every YAML file under okrs/ is loaded whatever it is called —
+# but a team's goals are worth reading as a unit, because the balance between what is
+# committed and what is a stretch only shows up when you can see them together.
+#
+# The IDs are yours to choose, and other files refer to them, so they are namespaced by
+# team rather than by the objective above them: a key result can contribute to more
+# than one objective, and it should not have to be renamed when it does.
+
+# objectives:
+#   - id: support.fast-resolution
+#     statement: Customers get their problems solved, fast
+#     owner: head-of-support
+#     commitment: committed
+#     key_results:
+#       - id: support.resolution-time
+#         statement: Median ticket resolution time under 4 hours
+#         type: metric
+#         owner: head-of-support
+#         metric: resolution_time_p50
+#         target: 4

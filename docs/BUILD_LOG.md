@@ -304,3 +304,79 @@ goal.
 **The entry point moved to `agentic_okr.cli:main`, and the package root imports nothing.**
 Under the old `agentic_okr:main`, importing `agentic_okr.core` would execute the package
 root and pull a terminal renderer into every program that only wanted to read a graph.
+
+---
+
+## The scaffold — `core/scaffold.py`, `examples/scaffold/`
+
+ADR-0002 decides that `okr init` is where the layout gets taught and why it is generated
+rather than kept as a template repo; ADR-0007 decides the layout it teaches. What was not
+settled:
+
+**The scaffold lives in `core`, not in the CLI.** It is the layout, expressed as code, and
+the property that makes it worth generating — that it cannot drift from the validator — only
+holds if it sits beside the validator. The CLI writes nothing itself; it calls `create` and
+renders what came back. This is also the only place the tool writes files, and it writes
+them into somebody else's repo, never its own.
+
+**`okr init`'s refusals carry no error code.** Every other failure the tool prints carries
+one from the registry, so this is a deliberate exception. That registry is what
+`okr validate` reports and what the Conductor will consume; nothing consumes the reason a
+directory could not be scaffolded. Extending a published contract to cover a command's own
+mechanics would add a promise with no reader, and the guarantee that a code's meaning never
+changes is worth more when the set stays small. `ScaffoldRefused` carries a sentence.
+
+**Refusing to init inside an existing repo is the same decision as ADR-0008's marker walk,
+seen from the other end.** Two markers in one tree means anything reading the goals stops at
+the nearer one and silently reads part of an organisation — the partial graph the marker
+exists to prevent. The message names the outer root and points at its `okrs/` directory,
+because the thing the person actually wanted is a team file in the repo they already have.
+
+**Existing files are kept, never overwritten, and only `okr.yaml` refuses outright.** A
+`.gitignore` somebody already wrote is theirs. So `create` reports written and kept
+separately, and the CLI prints both.
+
+**Init validates what it wrote and prints the result.** One line, from the same renderer
+`okr validate` uses. It costs a load and it makes the claim checkable at the moment it is
+made rather than in a test the adopter never sees. The exit code follows the validation, so
+the only way `okr init` exits non-zero having written files is if a file it kept is the
+problem — which is exactly when somebody needs to know.
+
+**The scaffold is mostly comments, and the examples are the last block of each file.** That
+placement is a convention the tests depend on: for every scaffolded file that has nothing
+live in it, the final blank-line-separated block is a commented example, and uncommenting
+it must yield a repo that loads and validates silently. The three examples are therefore
+mutually consistent — the owner the goal file names is the owner `owners.yaml` declares, and
+the metric it targets is the one `metrics.yaml` declares. Anything else would teach a
+dangling reference as the starting shape.
+
+**Guardrails and anti-targets are left out of the scaffold**, despite being the point of the
+tool. A scaffold showing every optional field teaches that writing a goal here means filling
+in twenty; those two are what the Champion elicits in conversation, and `examples/` plus
+`docs/GRAPH-BY-EXAMPLE.md` are where a reader sees a full one. Flagged because it looks like
+an omission and is not.
+
+**The period is written by the YAML writer, not pasted into a template.** It is free text
+from a prompt, and a colon or a leading asterisk in it would produce a marker that is not
+the file we meant to write — with the failure landing on somebody's brand new repo. It is
+also slugified before it reaches a filename, for the same reason in the other direction.
+
+**`examples/scaffold/` is generated output, committed.** The test asserts it byte for byte
+against a fresh `create`, so changing the scaffold's wording means regenerating it in the
+same commit. The period it was generated with is read out of its own `okr.yaml` rather than
+duplicated in the test.
+
+**The reference examples this was meant to be checked against do not exist yet.** The brief
+was that the scaffold and the reference repos must not disagree, and today `examples/` holds
+only the scaffold — the worked three-team organisation lives in `docs/GRAPH-BY-EXAMPLE.md`
+and in `tests/test_loader.py` as strings. The vocabulary was kept deliberately identical
+(`support.fast-resolution`, `support.resolution-time`, `resolution_time_p50`,
+`head-of-support`) so that when that repo does land under `examples/`, the two already
+agree. Worth doing properly: the fixture strings in `test_loader.py` should become that
+example repo, read from disk.
+
+**CLI help is rendered as markdown.** Typer's default treats every newline in a docstring as
+a line break, so help text wrapped at whatever column the source line happened to end on and
+read as though it had been formatted badly. `rich_markup_mode="markdown"` reflows
+paragraphs. Noted because it looks like a styling preference and is not — the docstrings are
+help text a goal owner reads.

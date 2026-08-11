@@ -139,7 +139,37 @@ Roughly in order:
 
 ## Quickstart
 
-*Coming with the v1 schema.* It will be: create an OKR repo, write one objective, run `okr validate`.
+Create an OKR repo, write a goal, check it. No API key, no account, no database — this half of the tool needs none of them.
+
+```bash
+uv tool install agentic-okr      # or: pip install agentic-okr
+
+mkdir acme-okrs && cd acme-okrs
+okr init                          # asks which cycle these goals cover
+```
+
+That scaffolds a repo whose files are almost entirely comments — prose explaining each one, then a commented example to uncomment and edit:
+
+```
+acme-okrs/
+  okr.yaml                     # schema_version, period, where things live
+  metrics.yaml                 # what your organisation measures
+  owners.yaml                  # who exists
+  okrs/support/2026-q3.yaml    # one team's goals
+```
+
+Edit the goal file, then:
+
+```bash
+okr validate    # errors and warnings, grouped by file, with locations
+okr graph       # the goal graph as a tree, plus every connection written by hand
+```
+
+`okr validate` exits non-zero when something needs fixing, so it works as a CI check on a goal repo — which is useful to an organisation with no interest in the agent at all. `--json` on either command gives machine-readable output.
+
+For what a filled-in organisation looks like, see [docs/GRAPH-BY-EXAMPLE.md](docs/GRAPH-BY-EXAMPLE.md): three teams, all five edge shapes, and the YAML behind the diagram.
+
+> Pre-alpha, and the schema is unstable by intention. `schema_version` is checked exactly, so a repo written today will refuse to load against a tool that has moved on rather than being read on a guess.
 
 ## The thinking behind it
 
