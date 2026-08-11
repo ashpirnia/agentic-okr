@@ -92,6 +92,27 @@ You do not have to provide a database. The Shepherd owns its own store and will 
 
 The practical payoff: when the Shepherd discovers that agents found a way to game a goal, the new guardrail arrives as a PR with the evidence attached. A human merges it, and the trick is on the page for every fleet that follows.
 
+## What runs where
+
+"Stored in git" invites a fair objection: if goals live in GitHub, isn't GitHub the database, and isn't claiming platform independence like claiming database independence?
+
+Partly. The distinction that holds is that **the datastore is git, not a git host**. Your OKRs are git objects — the same bytes on GitHub, GitLab, Bitbucket, a bare repo on your own server, or a laptop with no remote at all. That is one format, not a compatibility layer over several.
+
+What *isn't* git is the review workflow. Pull requests, `CODEOWNERS` and reviewer assignment are host features, and this architecture leans on review to turn a declared dependency into an accepted commitment.
+
+| | Depends on | Works on |
+| :--- | :--- | :--- |
+| Your YAML files | a filesystem | anything |
+| History, blame, semantic diff | git | any host, or none |
+| `init` · `validate` · `score` · `graph` · `diff` | git | any host, or none |
+| Review as the acceptance mechanism | a host with merge requests | GitHub, GitLab, Bitbucket, Gitea, Gerrit — API differs |
+| `okr codeowners` output | host-specific format | GitHub and GitLab share syntax; others differ |
+| Requesting a reviewer automatically | a host's API | shipped as an editable GitHub Actions example |
+
+So the accurate claim is narrower than "platform agnostic": **your data is portable everywhere; the automation assumes a host with reviews and path-based ownership, and the examples are GitHub.** An organisation on Bitbucket keeps every file and every command, and rewrites roughly forty lines of CI.
+
+That boundary is deliberate and worth defending — no API client lives in this codebase. If that ever changes, this section has to shrink.
+
 ## What this is not
 
 - **Not an OKR SaaS.** No web UI, no dashboards, no hosted service. A CLI and a directory of YAML.

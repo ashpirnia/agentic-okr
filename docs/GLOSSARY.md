@@ -41,7 +41,7 @@ Milestone key results are legitimate, not deficient. But an objective built only
 
 A goal essential to the business, expected to be fully achieved. Doerr's expected score is 1.0; missing it is a failure. *"Meet the compliance deadline."*
 
-Committed goals are where the pressure to hit the number at any cost is highest, which makes them the goals most in need of guardrails, restraint clauses and anti-targets. Completeness scoring holds them to a higher bar for exactly that reason.
+Committed goals are where the pressure to hit the number at any cost is highest, which makes them the goals most in need of guardrails and well-defended anti-targets. Completeness scoring holds them to a higher bar for exactly that reason.
 
 ### 📖 Aspirational
 
