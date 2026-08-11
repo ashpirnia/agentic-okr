@@ -15,6 +15,19 @@ from enum import StrEnum
 from typing import Final
 
 
+class Severity(StrEnum):
+    """Whether a violation fails the run.
+
+    Part of the published contract, not a presentation choice: a consumer deciding
+    whether a spec is safe to act on reads this. It is carried by the code itself —
+    `E` fails, `W` reports and exits zero — so no caller can grade a violation
+    differently from the registry.
+    """
+
+    ERROR = "error"
+    WARNING = "warning"
+
+
 class Code(StrEnum):
     """Machine-readable identity of a validation violation."""
 
@@ -28,12 +41,14 @@ class Code(StrEnum):
     METRICS_FILE_MISSING = "E007_METRICS_FILE_MISSING"
     OWNERS_FILE_MISSING = "E008_OWNERS_FILE_MISSING"
     PATH_HAS_NO_MARKER = "E009_PATH_HAS_NO_MARKER"
+    NO_OWNERS_DECLARED = "E010_NO_OWNERS_DECLARED"
 
     # E1xx — parse and structure.
     YAML_UNPARSEABLE = "E101_YAML_UNPARSEABLE"
     UNKNOWN_FIELD = "E102_UNKNOWN_FIELD"
     FIELD_MISSING = "E103_FIELD_MISSING"
     FIELD_EMPTY = "E104_FIELD_EMPTY"
+    FIELD_INVALID = "E105_FIELD_INVALID"
 
     # E2xx — identity and references.
     DUPLICATE_ID = "E201_DUPLICATE_ID"
@@ -65,11 +80,21 @@ class Code(StrEnum):
     UNUSED_METRIC = "W104_UNUSED_METRIC"
     UNUSED_OWNER = "W105_UNUSED_OWNER"
 
+    @property
+    def severity(self) -> Severity:
+        """Whether this code fails the run. Carried by the code's own band."""
+        return Severity.WARNING if self.value.startswith("W") else Severity.ERROR
+
 
 #: Codes pydantic raises on its own behalf, mapped to ours. A missing or extra field is
 #: detected by the model; which of our codes it becomes depends on the model it was
 #: found in, so the loader completes the mapping (a missing marker field is
 #: `E003_MARKER_FIELD_MISSING`, a missing node field is `E103_FIELD_MISSING`).
+#:
+#: Anything not listed becomes `E105_FIELD_INVALID`: a value pydantic could not read as
+#: the shape the field declares — a word where a number belongs, or a `commitment`
+#: outside the fixed set. The fallback is deliberate, so a pydantic release that adds an
+#: error type reports a code rather than escaping as a traceback.
 PYDANTIC_ERROR_TYPES: Final = {
     "missing": Code.FIELD_MISSING,
     "extra_forbidden": Code.UNKNOWN_FIELD,

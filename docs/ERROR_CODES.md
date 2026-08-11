@@ -21,6 +21,9 @@ Three guarantees:
 - **`E003` and `E103` are the same underlying violation in different files.** A missing required field is detected by the parser before any of our code runs, so the file being read is what distinguishes them — `E003_MARKER_FIELD_MISSING` in `okr.yaml`, `E103_FIELD_MISSING` in a goal file. Only the caller knows which, so the loader completes the mapping. The same applies to `E102_UNKNOWN_FIELD`.
 - **A code may be raised later than you would expect.** The type-conditional rules `E401`–`E403` are computable from a single key result but are the validator's, not the model's: a model raises fatally on the first failure, and a goal owner needs every problem in their file at once with locations.
 
+**A missing default file is not the same as a missing declared one.** `metrics_file` and `owners_file` default when unwritten, and an absent default is treated differently from a path that was named and is wrong (`E007`, `E008`). The two vocabularies are also not symmetric: an empty metrics vocabulary is legitimate — a repo of only milestone key results has no metrics — while an empty owners vocabulary never is, since `owner` is required on every objective and key result. So an absent `metrics.yaml` loads and lets individual references fail at the line that is wrong; an absent `owners.yaml` in a repo with any nodes is `E010`, because otherwise every node fails at once and nothing names the cause.
+- **A code may also be raised earlier than you would expect.** `E201_DUPLICATE_ID` reads like a validation check, and for metrics and owners it is one — but two nodes sharing an ID is reported by the *loader*, because there is no index to build from them and every reference would silently resolve to whichever copy was read last.
+
 ---
 
 ## E0xx — Repo and marker
@@ -37,6 +40,7 @@ Failures that stop the graph being loaded at all. See [ADR-0008](adr/0008-okr-ya
 | `E006_OKR_DIR_MISSING` | The directory named by `okr_dir` does not exist. |
 | `E007_METRICS_FILE_MISSING` | `metrics_file` names a file that does not exist. |
 | `E008_OWNERS_FILE_MISSING` | `owners_file` names a file that does not exist. |
+| `E010_NO_OWNERS_DECLARED` | The repo contains objectives or key results but declares no owners, because the default `owners.yaml` is absent. Distinct from `E008`, which is a path that was named and is wrong. |
 | `E009_PATH_HAS_NO_MARKER` | An explicit path argument was given but contains no `okr.yaml`. Loading a subdirectory as though it were a whole graph is never supported. |
 
 ## E1xx — Parse and structure
@@ -47,6 +51,7 @@ Failures that stop the graph being loaded at all. See [ADR-0008](adr/0008-okr-ya
 | `E102_UNKNOWN_FIELD` | A field not in the schema. Catches misspellings like `anti_target:` or `guardrail:`, which would otherwise be silently ignored and produce a spec that looks complete and is empty. |
 | `E103_FIELD_MISSING` | A required node field is absent — `id`, `statement`, `type`, `owner`, or `commitment` on an objective. |
 | `E104_FIELD_EMPTY` | A required field is present but blank. |
+| `E105_FIELD_INVALID` | A field's value is not a form the schema allows — a word where a number belongs, or a value outside a fixed set such as `commitment` or a key result's `type`. Also the fallback for anything the parser rejects that no more specific code covers, so a parse failure is always a code and never a traceback. |
 
 ## E2xx — Identity and references
 

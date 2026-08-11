@@ -74,7 +74,7 @@ A key result can support multiple parent objectives. OKRs are created both casca
 Edges are declared on the **needy side**: a child declares what it `supports`, a dependent declares what it `depends_on`, and nothing is ever declared on the parent or provider. Cycles in `supports` are errors; cycles in `depends_on` are warnings that still exit zero, so the validator needs severity levels. See ADR-0006 and ADR-0007.
 
 **Errors carry stable codes.**
-[`docs/ERROR_CODES.md`](docs/ERROR_CODES.md) is the registry — 35 codes across six bands. It is a **published contract**: a code's meaning never changes, retired codes stay reserved, and new checks get new codes rather than widening an existing one. Severity is part of the contract too — `E` fails and exits non-zero, `W` reports and exits zero.
+[`docs/ERROR_CODES.md`](docs/ERROR_CODES.md) is the registry — 37 codes across six bands. It is a **published contract**: a code's meaning never changes, retired codes stay reserved, and new checks get new codes rather than widening an existing one. Severity is part of the contract too — `E` fails and exits non-zero, `W` reports and exits zero.
 
 Never invent a code inline; add it to the registry first. Never let a validation failure surface as a raw traceback. Never write a test that asserts on message text — assert on the code.
 
