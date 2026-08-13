@@ -8,6 +8,17 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+
+    # The floor and the ceiling. 3.12 is what `requires-python` promises, and a promise
+    # nothing runs is a promise that quietly stops being true — the linter alone will
+    # push the code forward, since ruff's pyupgrade rules rewrite to `target-version`.
+    # 3.14 is what the project is developed on. Anything between is covered by neither
+    # end failing, which is the trade for a matrix that stays cheap.
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.14"]
+
     steps:
       - uses: actions/checkout@v4
 
@@ -16,20 +27,17 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Set up Python
-        run: uv python install
-
       - name: Install dependencies
-        run: uv sync --all-extras
+        run: uv sync --all-extras --python ${{ matrix.python-version }}
 
       - name: Ruff check
-        run: uv run ruff check .
+        run: uv run --python ${{ matrix.python-version }} ruff check .
 
       - name: Ruff format check
-        run: uv run ruff format --check .
+        run: uv run --python ${{ matrix.python-version }} ruff format --check .
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run --python ${{ matrix.python-version }} pytest
 
   # The install a user gets who wants the schema, loader, validator and CLI and never
   # intends to run the agent. `uv sync` without --all-extras leaves out the `agent`
@@ -37,6 +45,12 @@ jobs:
   # tests/test_minimal_install.py guards the same rule statically, in every job.
   minimal-install:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.14"]
+
     steps:
       - uses: actions/checkout@v4
 
@@ -45,21 +59,18 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Set up Python
-        run: uv python install
-
       - name: Install without the agent extra
-        run: uv sync
+        run: uv sync --python ${{ matrix.python-version }}
 
       - name: Confirm the agent extra really is absent
         run: |
-          if uv run python -c "import langgraph" 2>/dev/null; then
+          if uv run --python ${{ matrix.python-version }} python -c "import langgraph" 2>/dev/null; then
             echo "langgraph is installed, so this job proves nothing about the minimal install."
             exit 1
           fi
 
       - name: The schema, loader and CLI import with no agent dependencies
-        run: uv run python -c "import agentic_okr, agentic_okr.core"
+        run: uv run --python ${{ matrix.python-version }} python -c "import agentic_okr, agentic_okr.core"
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run --python ${{ matrix.python-version }} pytest

@@ -486,3 +486,37 @@ The three-state progression the amendment describes — no key results warns and
 milestones only clears the warning and still fails, a metric clears both — is a checkable
 claim about two subsystems agreeing, so `tests/test_score.py` checks it rather than
 trusting the prose.
+
+---
+
+## The supported Python floor — 3.12, and a CI job that keeps it true
+
+`requires-python` was `>=3.14`, which put the newest interpreter in existence between an
+adopter and the tool. It is now `>=3.12`. The suite passes on 3.12, 3.13 and 3.14, with and
+without the agent extra.
+
+**The floor was almost soft, and the one thing holding it up was a linter's doing.** The
+version-sensitive syntax is `type` statements (3.12) and `Self` (3.11), both below the new
+floor. The single genuine blocker was `Tally.__add__`, which annotated its own class
+unquoted in that class's body — legal from 3.14, where PEP 649 makes annotations lazy, and
+a `NameError` at import before it. Those quotes had been there and were removed by ruff's
+`UP037` acting on `target-version = "py314"`. So the lint configuration had silently raised
+the runtime floor, and nothing was running on anything older to notice. `target-version` is
+now `py312`, which is what stops that recurring.
+
+**Both ends of the range are in CI, and the floor end is the one that earns its keep.**
+Developing on 3.14 means a syntax regression is caught by ruff locally, but a *runtime*
+regression like this one is invisible until something old runs the code. Testing only the
+newest interpreter would have left `requires-python` as an unverified claim — and the
+failure mode is not a test going red, it is a friendly tester's install failing in a way
+they do not report. 3.13 is left out: the two ends failing is enough signal for a matrix
+that stays cheap.
+
+**`uv.lock` records `requires-python` and had to be regenerated.** Easy to miss, because
+everything keeps working locally on an already-synced 3.14 venv and CI is where it surfaces.
+
+**What this buys, beyond tidiness.** `pipx install git+...` and a plain `pip` into a
+virtualenv both become viable, so somebody unwilling to install another package manager has
+a route. uv stays the recommendation — it still handles the interpreter for anyone older,
+and `uv tool upgrade` is what makes a mid-round fix one line — but it is no longer the only
+door.

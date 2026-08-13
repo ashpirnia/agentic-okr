@@ -28,14 +28,20 @@ This is the distinction most likely to be got wrong, and it is wrong in a way th
 
 A support lead raising a PR to add a guardrail must never have to look at our `src/` tree. When writing docs, error messages or CLI help, always be explicit about which repo you mean — say "your OKR repo", never a bare "the repo".
 
-**`examples/` and `tests/fixtures/` are different things and must never be the same files.**
+**OKR files appear here for four different reasons. Never merge two of them.**
 
-- **`examples/`** is shipped and read by adopters. Everything in it is something to copy: exemplary specs, a plausible organisation, no field left out that a real goal would carry. Nothing in it may model a mistake.
-- **`tests/fixtures/`** exists for coverage. Deliberately bad specs belong here — an anti-target with no defence, a build-trapped objective, a dangling reference — because a check cannot be proven to fire without input that trips it.
+| | Purpose | Where |
+| :--- | :--- | :--- |
+| Developer testing | prove the checks fire | `tests/` — deliberately bad where coverage needs it |
+| Repository examples | explain concepts to a contributor | `docs/`, e.g. `GRAPH-BY-EXAMPLE.md` — may be imperfect *if annotated* |
+| User examples | help an end user write their first goal | shipped by `okr init` — **nothing here may model a mistake**, it gets copied |
+| User testing | find out whether a human can use this | **outside this repo entirely** |
 
-The two pull in opposite directions, and the sharpest case shows why: proving K4 works needs an anti-target with *no* defence, and shipping that as an example teaches exactly what the check exists to catch.
+The sharpest case: proving K4 works needs an anti-target with *no* defence, and shipping that as a user example teaches exactly what the check exists to catch.
 
-Both must be **shaped exactly like a real OKR repo**, marker file and all, or they quietly encode assumptions no real repo satisfies.
+**Never put user-testing material in this repo.** Testers' returned OKR repos are other people's real goals, possibly commercially sensitive, and belong to them. They live outside the tool repo with the testing plan.
+
+Everything that is an OKR repo must be **shaped exactly like a real one**, marker file and all, or it quietly encodes assumptions no real repo satisfies.
 
 ## Invariants
 
@@ -158,7 +164,8 @@ Every one of these must work against a bare repo with no remote.
 
 ## Conventions
 
-- Python 3.14, `uv` for everything. Never invoke `pip` or a bare `python`.
+- **Python 3.12 is the supported floor; 3.14 is what we develop on.** `requires-python = ">=3.12"`, and CI runs both ends of that range. The floor is a promise to anyone installing with `pipx` or plain `pip`, and a promise nothing runs stops being true — ruff's pyupgrade rules rewrite to `target-version`, which is why that is pinned to `py312` too. If you raise either, raise both, and expect the 3.12 job to tell you what broke. The known trap is a class annotating itself unquoted in its own body: legal from 3.14, a `NameError` before it.
+- `uv` for everything. Never invoke `pip` or a bare `python`.
 - Ruff config lives in `pyproject.toml` and is authoritative. Do not add a separate linter or formatter.
 - Prefer a library function with a thin CLI wrapper over logic living in the CLI. The graph object is the public API; the CLI is one consumer of it.
 - Tests assert on error codes and golden files, not on prose.

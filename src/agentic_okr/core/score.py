@@ -114,7 +114,11 @@ class Tally:
         """For display only. None when nothing applies, which is not the same as zero."""
         return None if self.total == 0 else round(self.passed / self.total * 100)
 
-    def __add__(self, other: Tally) -> Tally:
+    # Quoted deliberately. A class cannot refer to itself unquoted in its own body until
+    # 3.14 makes annotations lazy, and the supported floor is 3.12. Ruff will offer to
+    # remove these the moment `target-version` is raised; the CI job on the floor is what
+    # catches it if somebody accepts.
+    def __add__(self, other: "Tally") -> "Tally":
         return Tally(self.passed + other.passed, self.total + other.total)
 
     def __str__(self) -> str:
