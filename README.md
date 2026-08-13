@@ -141,9 +141,16 @@ Roughly in order:
 
 Create an OKR repo, write a goal, check it. No API key, no account, no database — this half of the tool needs none of them.
 
-```bash
-uv tool install agentic-okr      # or: pip install agentic-okr
+Not on PyPI yet — install it from here. Either line works, and both put an `okr` command on your PATH:
 
+```bash
+uv tool install git+https://github.com/ashpirnia/agentic-okr    # also fetches a Python if you need one
+pipx install git+https://github.com/ashpirnia/agentic-okr       # if you already have Python 3.12+
+```
+
+Then:
+
+```bash
 mkdir acme-okrs && cd acme-okrs
 okr init                          # asks which cycle these goals cover
 ```
@@ -169,7 +176,7 @@ okr graph       # the goal graph as a tree, plus every connection written by han
 
 For what a filled-in organisation looks like, see [docs/GRAPH-BY-EXAMPLE.md](docs/GRAPH-BY-EXAMPLE.md): three teams, all five edge shapes, and the YAML behind the diagram.
 
-> Pre-alpha, and the schema is unstable by intention. `schema_version` is checked exactly, so a repo written today will refuse to load against a tool that has moved on rather than being read on a guess.
+> Pre-alpha, and the schema is unstable by intention. `schema_version` is checked exactly, so a repo written today will refuse to load against a tool that has moved on rather than being read on a guess. If something looks wrong, `okr --version` prints the commit you are on — worth quoting, since installing from a branch means the version number alone does not identify it.
 
 ## The thinking behind it
 

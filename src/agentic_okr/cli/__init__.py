@@ -40,7 +40,7 @@ from agentic_okr.core import (
 from agentic_okr.core.scaffold import OKR_DIR
 from agentic_okr.core.score import score
 
-from . import report, scorecard, topology
+from . import report, scorecard, topology, version
 
 #: How wide the report is when nothing is there to ask. A terminal is measured; a pipe,
 #: a log file or a pull request comment gets this. Wider than rich's own fallback of 80,
@@ -62,6 +62,24 @@ app = typer.Typer(
 #: Where a human-readable report goes. Machine output bypasses this entirely — rich would
 #: wrap and colour JSON, and something parsing it is not reading a terminal.
 console = Console(width=None if sys.stdout.isatty() else PIPED_WIDTH)
+
+
+@app.callback()
+def okr(
+    version_wanted: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            help="Print which copy of this tool you are running, and stop.",
+            # Eager, so it answers before Typer objects that no command was named.
+            # `okr --version` has to work on its own, which is the whole point of it.
+            is_eager=True,
+            callback=lambda value: version.show(value),
+        ),
+    ] = False,
+) -> None:
+    """Check and read the OKRs in your OKR repo."""
+
 
 PathArgument = Annotated[
     Path | None,
